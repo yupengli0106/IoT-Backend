@@ -2,13 +2,16 @@ package com.demo.myapp.service.impl;
 
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.mapper.UserMapper;
+import com.demo.myapp.pojo.LoginUser;
 import com.demo.myapp.pojo.User;
 import com.demo.myapp.service.LoginService;
 import com.demo.myapp.utils.JwtUtil;
 import jakarta.annotation.Resource;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -33,26 +36,30 @@ public class LoginServiceImpl implements LoginService {
     RedisTemplate redisTemplate;
 
     @Override
-    public Result login(User user) {
-        String username = user.getUsername();
-        String password = user.getPassword();
-        String dbPassword = userMapper.getPasswordByUsername(username);
+    public ResponseEntity<Result> login(User user) {
+        // use SpringSecurity's AuthenticationManager to authenticate the user
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
-        if (bCryptPasswordEncoder.matches(password,dbPassword)){
-            Map<String, Object> map = new HashMap<>();
-            map.put("username",username);
-            map.put("password",password);
-            String token = JwtUtil.generateToken(map);
+        //pass the authentication
+        if (authentication.isAuthenticated()){
+            LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+            // Generate a token
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("username", loginUser.getUsername());
+            claims.put("password", loginUser.getPassword());
+            String token = JwtUtil.generateToken(claims);
             // Store the token in the redis for 1 hour
-            redisTemplate.opsForValue().set(token,user, 1, TimeUnit.HOURS);
-            return Result.success("Login successfully");
+            redisTemplate.opsForValue().set(token,loginUser, 1, TimeUnit.HOURS);
+            return ResponseEntity.ok(Result.success(token));
         }else {
-            return Result.error(401,"Password or Username is incorrect");
+            // If the authentication fails, return an error message
+            return ResponseEntity.status(403).body(Result.error(403,"Password or Username is incorrect"));
         }
     }
 
     @Override
-    public Result register(User user) {
+    public ResponseEntity<Result> register(User user) {
         String username = user.getUsername();
         String password = user.getPassword();
         String email = user.getEmail();
@@ -60,12 +67,12 @@ public class LoginServiceImpl implements LoginService {
         String dbEmail = userMapper.getEmailByEmail(email);
 
         if (email.equals(dbEmail)) {
-            return Result.error(401,"This email already exists");
+            return ResponseEntity.status(409).body(Result.error(409,"Email already exists"));
         }else {
             // encrypt the password and insert the user into the database
             User newUser = new User(username,bCryptPasswordEncoder.encode(password),email);
             userMapper.insertUser(newUser);
-            return Result.success("Register successfully");
+            return ResponseEntity.ok(Result.success("Register successfully"));
         }
     }
 }

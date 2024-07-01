@@ -4,6 +4,7 @@ import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.User;
 import com.demo.myapp.service.LoginService;
 import jakarta.annotation.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,17 +22,17 @@ public class LoginController {
 
 
     @PostMapping("/login")
-    public Result login(@RequestBody User user) {
+    public ResponseEntity<Result> login(@RequestBody User user) {
         return loginService.login(user);
     }
 
     @GetMapping("/logout")
-    public String logout() {
-        return "logout";
+    public ResponseEntity<Result> logout() {
+        return null;
     }
 
     @PostMapping("/register")
-    public Result register(@RequestBody User user) {
+    public ResponseEntity<Result> register(@RequestBody User user) {
         return loginService.register(user);
     }
 
