@@ -4,9 +4,17 @@ import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.mapper.UserMapper;
 import com.demo.myapp.pojo.User;
 import com.demo.myapp.service.LoginService;
+import com.demo.myapp.utils.JwtUtil;
 import jakarta.annotation.Resource;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: Yupeng Li
@@ -19,6 +27,10 @@ public class LoginServiceImpl implements LoginService {
     UserMapper userMapper;
     @Resource
     BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Resource
+    AuthenticationManager authenticationManager;
+    @Resource
+    RedisTemplate redisTemplate;
 
     @Override
     public Result login(User user) {
@@ -27,6 +39,12 @@ public class LoginServiceImpl implements LoginService {
         String dbPassword = userMapper.getPasswordByUsername(username);
 
         if (bCryptPasswordEncoder.matches(password,dbPassword)){
+            Map<String, Object> map = new HashMap<>();
+            map.put("username",username);
+            map.put("password",password);
+            String token = JwtUtil.generateToken(map);
+            // Store the token in the redis for 1 hour
+            redisTemplate.opsForValue().set(token,user, 1, TimeUnit.HOURS);
             return Result.success("Login successfully");
         }else {
             return Result.error(401,"Password or Username is incorrect");
