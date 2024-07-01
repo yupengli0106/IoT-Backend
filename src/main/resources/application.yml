@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: my-app
+
+
+# Alibaba MySQL DataSource
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${Aliyun_IP}:3306/myappDB
+    username: ${Database_Username}
+    password: ${Database_Password}
+
+  security:
+    user:
+      name: ${Security_Username}
+      password: ${Security_Password}
+
+
