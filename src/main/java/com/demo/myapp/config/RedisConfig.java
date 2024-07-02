@@ -27,4 +27,12 @@ public class RedisConfig {
 
         return template;
     }
+
+//    @PostConstruct
+//    public void testRedisConnection(RedisConnectionFactory connectionFactory) {
+//        RedisTemplate<String, Object> template = redisTemplate(connectionFactory);
+//        template.opsForValue().set("test", "test");
+//        String testValue = (String) template.opsForValue().get("test");
+//        System.out.println("Redis connection test value: " + testValue);
+//    }
 }

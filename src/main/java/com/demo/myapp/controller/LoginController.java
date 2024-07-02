@@ -36,4 +36,9 @@ public class LoginController {
         return loginService.register(user);
     }
 
+    @GetMapping("/home")
+    public String home() {
+        return "Welcome to the home page!";
+    }
+
 }

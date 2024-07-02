@@ -33,10 +33,7 @@ public class JWT {
 
     @Test
     public void testIsValidToken(){
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("user", "User");
-        claims.put("test", 1);
-        String token =  JwtUtil.generateToken(claims);
-        System.out.println(JwtUtil.isValidToken(token));
+       boolean isValid = JwtUtil.isValidToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyQ2xhaW1zIjp7InBhc3N3b3JkIjoiJDJhJDEwJDJKaks0djVFUWRZSmZZWDgzQ1U5di5ZamZDUGoveDdnT2hlWWcwVjZBN1R4L0YvTmhoL3BhIiwidXNlcm5hbWUiOiJhZG1pbiJ9LCJpc3MiOiJNeUFwcCIsImlhdCI6MTcxOTkwMDAxOSwiZXhwIjoxNzE5OTg2NDE5fQ.14NcnRNlFs8QpV8MisMpbpxtjknOeRB5TnvKJt2jaLg");
+        System.out.println(isValid);
     }
 }

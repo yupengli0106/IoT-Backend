@@ -1,5 +1,7 @@
 package com.demo.myapp.config;
 
+import com.demo.myapp.utils.JwtRequestFilter;
+import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * @Author: Yupeng Li
@@ -19,6 +22,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    @Resource
+    private JwtRequestFilter jwtRequestFilter;
+
     /**
      * Security filter chain
      * @param http HttpSecurity instance
@@ -33,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/login","/register").permitAll()// permit request without authentication
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
 
 //                .formLogin(formLogin -> formLogin
 //                        .loginPage("/login")

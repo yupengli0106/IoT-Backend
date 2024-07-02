@@ -9,6 +9,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * @Author: Yupeng Li
@@ -27,7 +30,9 @@ public class UserDetailServiceImpl implements UserDetailsService{
             throw new UsernameNotFoundException("User does not exist");
         }else {
             // TODO: Get user's permissions from database
-            return new LoginUser(user);
+            List<String> permissions = new ArrayList<>();
+            permissions.add("admin");
+            return new LoginUser(user, permissions);
         }
     }
 }

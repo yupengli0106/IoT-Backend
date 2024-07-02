@@ -33,7 +33,7 @@ public class LoginServiceImpl implements LoginService {
     @Resource
     AuthenticationManager authenticationManager;
     @Resource
-    RedisTemplate redisTemplate;
+    RedisTemplate<String, Object> redisTemplate;
 
     @Override
     public ResponseEntity<Result> login(User user) {
