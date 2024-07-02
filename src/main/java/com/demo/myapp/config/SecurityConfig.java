@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+                .logout(AbstractHttpConfigurer::disable);// disable logout otherwise it will conflict with our custom logout
 
 //                .formLogin(formLogin -> formLogin
 //                        .loginPage("/login")
@@ -48,11 +49,11 @@ public class SecurityConfig {
 //                        .failureUrl("/login?error=true")
 //                        .permitAll()
 //                )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login")
-                        .permitAll()
-                );
+//                .logout(logout -> logout
+//                        .logoutUrl("/logout")
+//                        .logoutSuccessUrl("/login")
+//                        .permitAll()
+//                );
         return http.build();
     }
 

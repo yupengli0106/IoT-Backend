@@ -3,7 +3,6 @@ package com.demo.myapp.service;
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.User;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 
 /**
  * @Author: Yupeng Li
@@ -14,4 +13,6 @@ public interface LoginService {
     ResponseEntity<Result> login(User user);
 
     ResponseEntity<Result> register(User user);
+
+    ResponseEntity<Result> logout(String token);
 }

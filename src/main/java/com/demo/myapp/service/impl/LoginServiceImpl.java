@@ -8,10 +8,12 @@ import com.demo.myapp.service.LoginService;
 import com.demo.myapp.utils.JwtUtil;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -75,4 +77,29 @@ public class LoginServiceImpl implements LoginService {
             return ResponseEntity.ok(Result.success("Register successfully"));
         }
     }
+
+    @Override
+    public ResponseEntity<Result> logout(String token) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(403).body(Result.error(403,"Token is empty"));
+        }
+
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        // Delete the token from Redis
+        Boolean wasDeleted = redisTemplate.delete(token);
+        // Check if the token was successfully deleted
+        if (wasDeleted == null || !wasDeleted) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Result.error(500, "Failed to delete token"));
+        }
+
+        // Clear the SecurityContextHolder
+        SecurityContextHolder.clearContext();
+
+        return ResponseEntity.ok(Result.success("Logout successfully"));
+    }
+
+
+
 }

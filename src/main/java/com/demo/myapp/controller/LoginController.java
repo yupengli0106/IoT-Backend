@@ -5,10 +5,7 @@ import com.demo.myapp.pojo.User;
 import com.demo.myapp.service.LoginService;
 import jakarta.annotation.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @Author: Yupeng Li
@@ -26,9 +23,9 @@ public class LoginController {
         return loginService.login(user);
     }
 
-    @GetMapping("/logout")
-    public ResponseEntity<Result> logout() {
-        return null;
+    @DeleteMapping("/logout")
+    public ResponseEntity<Result> logout(@RequestHeader("Authorization") String token) {
+        return loginService.logout(token);
     }
 
     @PostMapping("/register")

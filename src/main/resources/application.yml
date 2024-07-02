@@ -16,7 +16,7 @@ spring:
       name: ${Security_Username}
       password: ${Security_Password}
 
-#  Redis
+  # Redis
   data:
     redis:
       port: 6379
