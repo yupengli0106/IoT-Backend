@@ -1,12 +1,15 @@
 package com.demo.myapp.MapperTest;
 
+import com.demo.myapp.mapper.PermissionMapper;
 import com.demo.myapp.mapper.UserMapper;
 import com.demo.myapp.pojo.User;
 import jakarta.annotation.Resource;
-import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Author: Yupeng Li
@@ -20,21 +23,55 @@ public class UserMapperTest {
     UserMapper userMapper;
     @Resource
     BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Resource
+    PermissionMapper permissionMapper;
 
     @Test
-    public void testGetPasswordByUsername() {
-        String password = userMapper.getPasswordByUsername("admin");
-        String pwd = bCryptPasswordEncoder.encode("123123a");
-        System.out.println(pwd);
-//        System.out.println(password);
-        assert password.equals("$2a$10$JtQ3./Wvh3KKL.QB3FYOve6yZUbT.lLZZaH2ak5p/8N7FH/yZP43W");
+    public void testBCrypt() {
+        String password = "123";
+        String encode = bCryptPasswordEncoder.encode(password);
+        System.out.println(encode);
     }
 
     @Test
+    public void testDecode() {
+        String hashPwd ="$2a$10$lE4ZYLi64hLsopv5bCgxBuWOf8OufbXXxMt2P7osM83rNKtVOez.e";
+        boolean matches = bCryptPasswordEncoder.matches("123", hashPwd);
+        assert matches;
+    }
+
+    @Test
+    public void testFindByUsername() {
+        User user = userMapper.findByUsername("admin");
+        assert user.getUsername().equals("admin");
+    }
+
+    @Test
+    public void testGetEmailByEmail() {
+        String email = userMapper.getEmailByEmail("lypa520@gmail.com");
+        assert email.equals("lypa520@gmail.com");
+    }
+
+
+    @Test
     public void testAddUser() {
-        User user = new User("test", "123123a", "lypa520@e.com");
+        User user = new User("test1", "123123a", "test1@test1.com");
         userMapper.insertUser(user);
-        User newUser = userMapper.findByUsername("test");
-        assert newUser.getUsername().equals("test");
+        User newUser = userMapper.findByUsername("test1");
+        assert newUser.getUsername().equals("test1");
+    }
+
+    @Test
+    public void testGetPermissionsByUsername() {
+        List<String> permissions = new ArrayList<>();
+        permissions.add("READ_PRIVILEGE");
+        permissions.add("WRITE_PRIVILEGE");
+        permissions.add("DELETE_PRIVILEGE");
+
+        List<String> permissionsByEmail = permissionMapper.findPermissionsByUsername("admin");
+        for (String permission : permissionsByEmail) {
+            System.out.println(permission);
+        }
+        assert permissions.equals(permissionsByEmail);
     }
 }

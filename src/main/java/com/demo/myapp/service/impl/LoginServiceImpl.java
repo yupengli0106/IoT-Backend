@@ -1,6 +1,7 @@
 package com.demo.myapp.service.impl;
 
 import com.demo.myapp.controller.response.Result;
+import com.demo.myapp.mapper.RoleMapper;
 import com.demo.myapp.mapper.UserMapper;
 import com.demo.myapp.pojo.LoginUser;
 import com.demo.myapp.pojo.User;
@@ -30,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 public class LoginServiceImpl implements LoginService {
     @Resource
     UserMapper userMapper;
+    @Resource
+    RoleMapper roleMapper;
     @Resource
     BCryptPasswordEncoder bCryptPasswordEncoder;
     @Resource
@@ -74,6 +77,12 @@ public class LoginServiceImpl implements LoginService {
             // encrypt the password and insert the user into the database
             User newUser = new User(username,bCryptPasswordEncoder.encode(password),email);
             userMapper.insertUser(newUser);
+
+            // assign the user with default role(user) and permission(read) after registration
+            Long userId = newUser.getId();
+
+            Long roleId = roleMapper.getRoleIdByRoleName("ROLE_USER");
+            roleMapper.insertUserRole(userId, roleId);
             return ResponseEntity.ok(Result.success("Register successfully"));
         }
     }
