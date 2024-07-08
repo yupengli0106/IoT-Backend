@@ -24,4 +24,7 @@ public interface UserMapper {
 
     @Select("select email from users where email = #{email}")
     String getEmailByEmail(String email);
+
+    @Select("select username from users where username = #{username}")
+    String getUsernameByUsername(String username);
 }

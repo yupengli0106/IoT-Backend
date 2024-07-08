@@ -65,24 +65,33 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public ResponseEntity<Result> register(User user) {
-        String username = user.getUsername();
-        String password = user.getPassword();
-        String email = user.getEmail();
+        String username = user.getUsername().trim();
+        // TODO: 后续可以改进，比如密码长度限制
+        String password = user.getPassword().trim();
+        String email = user.getEmail().trim();
+        // Check if the username already exists
+        String dbUsername = userMapper.getUsernameByUsername(username);
         // Check if the email already exists
         String dbEmail = userMapper.getEmailByEmail(email);
 
-        if (email.equals(dbEmail)) {
+
+        if (dbUsername != null && dbUsername.equals(username)) {
+            return ResponseEntity.status(409).body(Result.error(409,"Username already exists"));
+        } else if (dbEmail != null && email.equals(dbEmail)) {
             return ResponseEntity.status(409).body(Result.error(409,"Email already exists"));
-        }else {
+        } else {
             // encrypt the password and insert the user into the database
             User newUser = new User(username,bCryptPasswordEncoder.encode(password),email);
             userMapper.insertUser(newUser);
 
-            // assign the user with default role(user) and permission(read) after registration
+            // assign the user with default role(‘ROLE_USER’) and permission(‘READ_PRIVILEGE’) after registration
             Long userId = newUser.getId();
-
+            /*
+            * 这里设置了默认的角色为‘ROLE_USER’，同时会根据‘ROLE_USER’这个角色给用户分配一个默认的权限，这个权限是在数据库中的，不是在代码中写死的
+             */
             Long roleId = roleMapper.getRoleIdByRoleName("ROLE_USER");
             roleMapper.insertUserRole(userId, roleId);
+
             return ResponseEntity.ok(Result.success("Register successfully"));
         }
     }
