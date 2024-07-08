@@ -7,7 +7,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${Aliyun_IP}:3306/myappDB
     username: ${Database_Username}
-    password: ${Database_Password}
+    password: password: ${Database_Password}
 
   # springSecurity
   security:
@@ -19,7 +19,24 @@ spring:
   data:
     redis:
       port: 6379
-      host: 120.25.104.84
+      host: ${Aliyun_IP}
+
+  # use gmail to send email
+  mail:
+    default-encoding: utf-8
+    host: smtp.gmail.com
+    username: ${Gmail_Username}
+    password: ${Gmail_App_Password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+    port: 587
+
+
 
 # Mybatis
 mybatis:

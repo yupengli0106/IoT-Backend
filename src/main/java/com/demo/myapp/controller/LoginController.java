@@ -34,6 +34,11 @@ public class LoginController {
         return loginService.register(user);
     }
 
+    @PostMapping("/verify-code")
+    public ResponseEntity<Result> verifyCode(@RequestParam String email, @RequestParam String code) {
+        return loginService.verifyCode(email, code);
+    }
+
     @GetMapping("/home")
     @PreAuthorize("hasAnyAuthority('DELETE_PRIVILEGE')")
     public String home() {

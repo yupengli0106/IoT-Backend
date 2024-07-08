@@ -39,6 +39,8 @@ public class LoginServiceImpl implements LoginService {
     AuthenticationManager authenticationManager;
     @Resource
     RedisTemplate<String, Object> redisTemplate;
+    @Resource
+    EmailService emailService;
 
     @Override
     public ResponseEntity<Result> login(User user) {
@@ -80,19 +82,20 @@ public class LoginServiceImpl implements LoginService {
         } else if (dbEmail != null && email.equals(dbEmail)) {
             return ResponseEntity.status(409).body(Result.error(409,"Email already exists"));
         } else {
-            // encrypt the password and insert the user into the database
-            User newUser = new User(username,bCryptPasswordEncoder.encode(password),email);
-            userMapper.insertUser(newUser);
+            // verify the email by sending a verification code
+            String code = null;
+            try {
+                code = emailService.sendVerificationCode(email);
+            } catch (Exception e) {
+                // TODO: log the exception
+                return ResponseEntity.status(500).body(Result.error(500, "Failed to send verification code"));
+            }
+            // 临时存储验证码
+            redisTemplate.opsForValue().set(email, code, 3, TimeUnit.MINUTES);
+            // 临时存储用户信息
+            redisTemplate.opsForValue().set("temp_user:" + email, user, 4, TimeUnit.MINUTES);
 
-            // assign the user with default role(‘ROLE_USER’) and permission(‘READ_PRIVILEGE’) after registration
-            Long userId = newUser.getId();
-            /*
-            * 这里设置了默认的角色为‘ROLE_USER’，同时会根据‘ROLE_USER’这个角色给用户分配一个默认的权限，这个权限是在数据库中的，不是在代码中写死的
-             */
-            Long roleId = roleMapper.getRoleIdByRoleName("ROLE_USER");
-            roleMapper.insertUserRole(userId, roleId);
-
-            return ResponseEntity.ok(Result.success("Register successfully"));
+            return ResponseEntity.ok(Result.success("Verification code sent to your email"));
         }
     }
 
@@ -118,6 +121,36 @@ public class LoginServiceImpl implements LoginService {
         return ResponseEntity.ok(Result.success("Logout successfully"));
     }
 
+    @Override
+    public ResponseEntity<Result> verifyCode(String email, String code) {
+        String storedCode = (String) redisTemplate.opsForValue().get(email);
+        if (storedCode != null && storedCode.equals(code)) {
+            // 验证成功，完成注册流程
+            User tempUser = (User) redisTemplate.opsForValue().get("temp_user:" + email);
+            if (tempUser != null) {
+                tempUser.setPassword(bCryptPasswordEncoder.encode(tempUser.getPassword()));
+                userMapper.insertUser(tempUser);
+
+                // assign the user with default role(‘ROLE_USER’) and permission(‘READ_PRIVILEGE’) after registration
+                Long userId = tempUser.getId();
+                /*
+                * 这里设置了默认的角色为‘ROLE_USER’，同时会根据‘ROLE_USER’这个角色给用户分配一个默认的权限，这个权限是在数据库中的，不是在代码中写死的
+                */
+                Long roleId = roleMapper.getRoleIdByRoleName("ROLE_USER");
+                roleMapper.insertUserRole(userId, roleId);
+
+                // 清除临时数据
+                redisTemplate.delete(email);
+                redisTemplate.delete("temp_user:" + email);
+
+                return ResponseEntity.ok(Result.success("Registration successful"));
+            } else {
+                return ResponseEntity.status(400).body(Result.error(400, "Temporary user data not found"));
+            }
+        } else {
+            return ResponseEntity.status(400).body(Result.error(400, "Invalid verification code"));
+        }
+    }
 
 
 }

@@ -12,7 +12,21 @@ import org.springframework.http.ResponseEntity;
 public interface LoginService {
     ResponseEntity<Result> login(User user);
 
+    /**
+     * register a new user and send the verification code to the user's email
+     * @param user user information
+     * @return if the verification code is sent successfully, return the success message, otherwise return the error message
+     */
     ResponseEntity<Result> register(User user);
 
     ResponseEntity<Result> logout(String token);
+
+    /**
+     * after the Register API is called, the user will receive an email with a verification code,
+     * then the user will call this API to verify the code
+     * @param email the email address
+     * @param code the code from the user
+     * @return the result of the verification, if the code is correct, insert the user into the database, otherwise return the error message
+     */
+    ResponseEntity<Result> verifyCode(String email, String code);
 }
