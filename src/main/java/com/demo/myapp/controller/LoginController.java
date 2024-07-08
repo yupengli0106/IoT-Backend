@@ -35,8 +35,7 @@ public class LoginController {
     }
 
     @GetMapping("/home")
-    // TODO: 这里用户权限的控制还需要多点测试，在注册的时候有没有默认分配权限permission？目前是分配了role的
-    @PreAuthorize("hasAnyAuthority('DELETE_PRIVILEGE','READ_PRIVILEGE') or hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('DELETE_PRIVILEGE')")
     public String home() {
         return "Welcome to the home page!";
     }

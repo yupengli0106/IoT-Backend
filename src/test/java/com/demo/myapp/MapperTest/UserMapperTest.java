@@ -28,7 +28,7 @@ public class UserMapperTest {
 
     @Test
     public void testBCrypt() {
-        String password = "123";
+        String password = "admin";
         String encode = bCryptPasswordEncoder.encode(password);
         System.out.println(encode);
     }
