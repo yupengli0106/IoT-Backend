@@ -37,9 +37,14 @@ spring:
     port: 587
 
 
-
 # Mybatis
 mybatis:
   mapper-locations: classpath:mapper/*.xml
 
-
+# Logging
+logging:
+  file:
+    name: logs/MyApp.log
+  level:
+    ${Database_Username}: INFO
+    com.demo.myapp: INFO

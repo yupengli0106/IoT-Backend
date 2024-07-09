@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -122,6 +123,7 @@ public class LoginServiceImpl implements LoginService {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<Result> verifyCode(String email, String code) {
         String storedCode = (String) redisTemplate.opsForValue().get(email);
         if (storedCode != null && storedCode.equals(code)) {

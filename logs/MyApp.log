@@ -1,0 +1,33 @@
+2024-07-09T16:23:33.267+10:00  INFO 62800 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Starting MyAppApplication using Java 22.0.1 with PID 62800 (/Users/richard/Documents/Coding/MyApp/target/classes started by richard in /Users/richard/Documents/Coding/MyApp)
+2024-07-09T16:23:33.269+10:00  INFO 62800 --- [my-app] [main] com.demo.myapp.MyAppApplication          : No active profile set, falling back to 1 default profile: "default"
+2024-07-09T16:23:33.617+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-09T16:23:33.617+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-07-09T16:23:33.624+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2024-07-09T16:23:33.634+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-09T16:23:33.634+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-07-09T16:23:33.640+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1 ms. Found 0 Redis repository interfaces.
+2024-07-09T16:23:34.080+10:00  INFO 62800 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2024-07-09T16:23:34.085+10:00  INFO 62800 --- [my-app] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2024-07-09T16:23:34.085+10:00  INFO 62800 --- [my-app] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.25]
+2024-07-09T16:23:34.105+10:00  INFO 62800 --- [my-app] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2024-07-09T16:23:34.105+10:00  INFO 62800 --- [my-app] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 818 ms
+2024-07-09T16:23:34.389+10:00  INFO 62800 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-07-09T16:23:37.204+10:00  INFO 62800 --- [my-app] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@50fd739d
+2024-07-09T16:23:37.207+10:00  INFO 62800 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-07-09T16:23:37.245+10:00  INFO 62800 --- [my-app] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-07-09T16:23:37.283+10:00  INFO 62800 --- [my-app] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2024-07-09T16:23:37.300+10:00  INFO 62800 --- [my-app] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-07-09T16:23:37.430+10:00  INFO 62800 --- [my-app] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-07-09T16:23:38.444+10:00  INFO 62800 --- [my-app] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-07-09T16:23:38.445+10:00  INFO 62800 --- [my-app] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-07-09T16:23:38.585+10:00  INFO 62800 --- [my-app] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailServiceImpl
+2024-07-09T16:23:38.625+10:00  WARN 62800 --- [my-app] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-07-09T16:23:39.378+10:00  INFO 62800 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2024-07-09T16:23:39.384+10:00  INFO 62800 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Started MyAppApplication in 6.322 seconds (process running for 6.713)
+2024-07-09T16:24:33.960+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-07-09T16:24:33.962+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2024-07-09T16:24:33.964+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2024-07-09T16:24:34.052+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.login(..) with arguments: [User(id=null, username=test, password=test, email=null, enabled=false)]
+2024-07-09T16:24:34.146+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: UserDetailServiceImpl.loadUserByUsername(..) with arguments: [test]
+2024-07-09T16:24:35.114+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: UserDetailServiceImpl.loadUserByUsername(..) with result: LoginUser(user=User(id=3, username=test, password=$2a$10$KumCAeiHOq5n.WPQpsiq3uGZbCtt9OMrSYtuibt4ENt6/ekGyov/q, email=lypa520@qq.com, enabled=true), permissions=[READ_PRIVILEGE], authorities=[READ_PRIVILEGE])
+2024-07-09T16:24:36.329+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.login(..) with result: <200 OK OK,Result[code=200, message=Success, data=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyQ2xhaW1zIjp7InBhc3N3b3JkIjoiJDJhJDEwJEt1bUNBZWlIT3E1bi5XUFFwc2lxM3VHWmJDdHQ5T01yU1l0dWlidDRFTnQ2L2VrR3lvdi9xIiwidXNlcm5hbWUiOiJ0ZXN0In0sImlzcyI6Ik15QXBwIiwiaWF0IjoxNzIwNTA2Mjc1LCJleHAiOjE3MjA1OTI2NzV9.nBV1wPyCa1fLBGcgphusyjh9Ikjymhgg1Aermvtc5N4],[]>
