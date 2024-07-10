@@ -125,6 +125,9 @@ public class LoginServiceImpl implements LoginService {
     @Override
     @Transactional
     public ResponseEntity<Result> verifyCode(String email, String code) {
+        // 去除前后空格
+        email = email.trim();
+        code = code.trim();
         String storedCode = (String) redisTemplate.opsForValue().get(email);
         if (storedCode != null && storedCode.equals(code)) {
             // 验证成功，完成注册流程

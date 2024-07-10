@@ -1,33 +1,251 @@
-2024-07-09T16:23:33.267+10:00  INFO 62800 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Starting MyAppApplication using Java 22.0.1 with PID 62800 (/Users/richard/Documents/Coding/MyApp/target/classes started by richard in /Users/richard/Documents/Coding/MyApp)
-2024-07-09T16:23:33.269+10:00  INFO 62800 --- [my-app] [main] com.demo.myapp.MyAppApplication          : No active profile set, falling back to 1 default profile: "default"
-2024-07-09T16:23:33.617+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
-2024-07-09T16:23:33.617+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2024-07-09T16:23:33.624+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
-2024-07-09T16:23:33.634+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
-2024-07-09T16:23:33.634+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2024-07-09T16:23:33.640+10:00  INFO 62800 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1 ms. Found 0 Redis repository interfaces.
-2024-07-09T16:23:34.080+10:00  INFO 62800 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2024-07-09T16:23:34.085+10:00  INFO 62800 --- [my-app] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2024-07-09T16:23:34.085+10:00  INFO 62800 --- [my-app] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.25]
-2024-07-09T16:23:34.105+10:00  INFO 62800 --- [my-app] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2024-07-09T16:23:34.105+10:00  INFO 62800 --- [my-app] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 818 ms
-2024-07-09T16:23:34.389+10:00  INFO 62800 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2024-07-09T16:23:37.204+10:00  INFO 62800 --- [my-app] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@50fd739d
-2024-07-09T16:23:37.207+10:00  INFO 62800 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2024-07-09T16:23:37.245+10:00  INFO 62800 --- [my-app] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2024-07-09T16:23:37.283+10:00  INFO 62800 --- [my-app] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
-2024-07-09T16:23:37.300+10:00  INFO 62800 --- [my-app] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2024-07-09T16:23:37.430+10:00  INFO 62800 --- [my-app] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2024-07-09T16:23:38.444+10:00  INFO 62800 --- [my-app] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2024-07-09T16:23:38.445+10:00  INFO 62800 --- [my-app] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2024-07-09T16:23:38.585+10:00  INFO 62800 --- [my-app] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailServiceImpl
-2024-07-09T16:23:38.625+10:00  WARN 62800 --- [my-app] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2024-07-09T16:23:39.378+10:00  INFO 62800 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2024-07-09T16:23:39.384+10:00  INFO 62800 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Started MyAppApplication in 6.322 seconds (process running for 6.713)
-2024-07-09T16:24:33.960+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2024-07-09T16:24:33.962+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2024-07-09T16:24:33.964+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
-2024-07-09T16:24:34.052+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.login(..) with arguments: [User(id=null, username=test, password=test, email=null, enabled=false)]
-2024-07-09T16:24:34.146+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: UserDetailServiceImpl.loadUserByUsername(..) with arguments: [test]
-2024-07-09T16:24:35.114+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: UserDetailServiceImpl.loadUserByUsername(..) with result: LoginUser(user=User(id=3, username=test, password=$2a$10$KumCAeiHOq5n.WPQpsiq3uGZbCtt9OMrSYtuibt4ENt6/ekGyov/q, email=lypa520@qq.com, enabled=true), permissions=[READ_PRIVILEGE], authorities=[READ_PRIVILEGE])
-2024-07-09T16:24:36.329+10:00  INFO 62800 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.login(..) with result: <200 OK OK,Result[code=200, message=Success, data=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyQ2xhaW1zIjp7InBhc3N3b3JkIjoiJDJhJDEwJEt1bUNBZWlIT3E1bi5XUFFwc2lxM3VHWmJDdHQ5T01yU1l0dWlidDRFTnQ2L2VrR3lvdi9xIiwidXNlcm5hbWUiOiJ0ZXN0In0sImlzcyI6Ik15QXBwIiwiaWF0IjoxNzIwNTA2Mjc1LCJleHAiOjE3MjA1OTI2NzV9.nBV1wPyCa1fLBGcgphusyjh9Ikjymhgg1Aermvtc5N4],[]>
+2024-07-10T18:31:23.215+10:00  INFO 89287 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Starting MyAppApplication using Java 22.0.1 with PID 89287 (/Users/richard/Documents/Coding/MyApp/target/classes started by richard in /Users/richard/Documents/Coding/MyApp)
+2024-07-10T18:31:23.221+10:00  INFO 89287 --- [my-app] [main] com.demo.myapp.MyAppApplication          : No active profile set, falling back to 1 default profile: "default"
+2024-07-10T18:31:23.607+10:00  INFO 89287 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T18:31:23.608+10:00  INFO 89287 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-07-10T18:31:23.615+10:00  INFO 89287 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2024-07-10T18:31:23.624+10:00  INFO 89287 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T18:31:23.625+10:00  INFO 89287 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-07-10T18:31:23.630+10:00  INFO 89287 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1 ms. Found 0 Redis repository interfaces.
+2024-07-10T18:31:24.146+10:00  INFO 89287 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2024-07-10T18:31:24.155+10:00  INFO 89287 --- [my-app] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2024-07-10T18:31:24.156+10:00  INFO 89287 --- [my-app] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.25]
+2024-07-10T18:31:24.179+10:00  INFO 89287 --- [my-app] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2024-07-10T18:31:24.179+10:00  INFO 89287 --- [my-app] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 935 ms
+2024-07-10T18:31:24.504+10:00  INFO 89287 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-07-10T18:31:27.216+10:00  INFO 89287 --- [my-app] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1b317e7d
+2024-07-10T18:31:27.218+10:00  INFO 89287 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-07-10T18:31:27.244+10:00  INFO 89287 --- [my-app] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-07-10T18:31:27.276+10:00  INFO 89287 --- [my-app] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2024-07-10T18:31:27.292+10:00  INFO 89287 --- [my-app] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-07-10T18:31:27.431+10:00  INFO 89287 --- [my-app] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-07-10T18:31:28.433+10:00  INFO 89287 --- [my-app] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-07-10T18:31:28.435+10:00  INFO 89287 --- [my-app] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T18:31:28.601+10:00  INFO 89287 --- [my-app] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailServiceImpl
+2024-07-10T18:31:28.647+10:00  WARN 89287 --- [my-app] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-07-10T18:31:29.451+10:00  INFO 89287 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2024-07-10T18:31:29.456+10:00  INFO 89287 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Started MyAppApplication in 6.489 seconds (process running for 6.919)
+2024-07-10T18:41:44.843+10:00  INFO 89287 --- [my-app] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-07-10T18:41:44.844+10:00  INFO 89287 --- [my-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2024-07-10T18:41:44.845+10:00  INFO 89287 --- [my-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2024-07-10T18:45:24.965+10:00  INFO 89287 --- [my-app] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T18:45:24.971+10:00  INFO 89287 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-07-10T18:45:27.797+10:00  INFO 89287 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2024-07-10T18:45:30.141+10:00  INFO 94133 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Starting MyAppApplication using Java 22.0.1 with PID 94133 (/Users/richard/Documents/Coding/MyApp/target/classes started by richard in /Users/richard/Documents/Coding/MyApp)
+2024-07-10T18:45:30.142+10:00  INFO 94133 --- [my-app] [main] com.demo.myapp.MyAppApplication          : No active profile set, falling back to 1 default profile: "default"
+2024-07-10T18:45:30.504+10:00  INFO 94133 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T18:45:30.504+10:00  INFO 94133 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-07-10T18:45:30.511+10:00  INFO 94133 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2024-07-10T18:45:30.520+10:00  INFO 94133 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T18:45:30.521+10:00  INFO 94133 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-07-10T18:45:30.526+10:00  INFO 94133 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1 ms. Found 0 Redis repository interfaces.
+2024-07-10T18:45:30.999+10:00  INFO 94133 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2024-07-10T18:45:31.005+10:00  INFO 94133 --- [my-app] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2024-07-10T18:45:31.005+10:00  INFO 94133 --- [my-app] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.25]
+2024-07-10T18:45:31.024+10:00  INFO 94133 --- [my-app] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2024-07-10T18:45:31.024+10:00  INFO 94133 --- [my-app] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 864 ms
+2024-07-10T18:45:31.308+10:00  INFO 94133 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-07-10T18:45:34.233+10:00  INFO 94133 --- [my-app] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7434ee13
+2024-07-10T18:45:34.235+10:00  INFO 94133 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-07-10T18:45:34.278+10:00  INFO 94133 --- [my-app] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-07-10T18:45:34.316+10:00  INFO 94133 --- [my-app] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2024-07-10T18:45:34.332+10:00  INFO 94133 --- [my-app] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-07-10T18:45:34.455+10:00  INFO 94133 --- [my-app] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-07-10T18:45:35.434+10:00  INFO 94133 --- [my-app] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-07-10T18:45:35.435+10:00  INFO 94133 --- [my-app] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T18:45:35.576+10:00  INFO 94133 --- [my-app] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailServiceImpl
+2024-07-10T18:45:35.614+10:00  WARN 94133 --- [my-app] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-07-10T18:45:36.365+10:00  INFO 94133 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2024-07-10T18:45:36.369+10:00  INFO 94133 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Started MyAppApplication in 6.454 seconds (process running for 6.815)
+2024-07-10T18:45:50.114+10:00  INFO 94133 --- [my-app] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-07-10T18:45:50.115+10:00  INFO 94133 --- [my-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2024-07-10T18:45:50.117+10:00  INFO 94133 --- [my-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2024-07-10T18:53:46.328+10:00  INFO 94133 --- [my-app] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T18:53:46.332+10:00  INFO 94133 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-07-10T18:53:48.960+10:00  INFO 94133 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2024-07-10T18:53:51.218+10:00  INFO 95556 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Starting MyAppApplication using Java 22.0.1 with PID 95556 (/Users/richard/Documents/Coding/MyApp/target/classes started by richard in /Users/richard/Documents/Coding/MyApp)
+2024-07-10T18:53:51.222+10:00  INFO 95556 --- [my-app] [main] com.demo.myapp.MyAppApplication          : No active profile set, falling back to 1 default profile: "default"
+2024-07-10T18:53:51.584+10:00  INFO 95556 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T18:53:51.585+10:00  INFO 95556 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-07-10T18:53:51.592+10:00  INFO 95556 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2024-07-10T18:53:51.601+10:00  INFO 95556 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T18:53:51.602+10:00  INFO 95556 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-07-10T18:53:51.607+10:00  INFO 95556 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1 ms. Found 0 Redis repository interfaces.
+2024-07-10T18:53:52.075+10:00  INFO 95556 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2024-07-10T18:53:52.081+10:00  INFO 95556 --- [my-app] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2024-07-10T18:53:52.081+10:00  INFO 95556 --- [my-app] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.25]
+2024-07-10T18:53:52.100+10:00  INFO 95556 --- [my-app] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2024-07-10T18:53:52.101+10:00  INFO 95556 --- [my-app] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 858 ms
+2024-07-10T18:53:52.392+10:00  INFO 95556 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-07-10T18:53:55.249+10:00  INFO 95556 --- [my-app] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@75f32817
+2024-07-10T18:53:55.251+10:00  INFO 95556 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-07-10T18:53:55.291+10:00  INFO 95556 --- [my-app] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-07-10T18:53:55.324+10:00  INFO 95556 --- [my-app] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2024-07-10T18:53:55.342+10:00  INFO 95556 --- [my-app] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-07-10T18:53:55.473+10:00  INFO 95556 --- [my-app] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-07-10T18:53:56.482+10:00  INFO 95556 --- [my-app] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-07-10T18:53:56.483+10:00  INFO 95556 --- [my-app] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T18:53:56.628+10:00  INFO 95556 --- [my-app] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailServiceImpl
+2024-07-10T18:53:56.666+10:00  WARN 95556 --- [my-app] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-07-10T18:53:57.467+10:00  INFO 95556 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2024-07-10T18:53:57.472+10:00  INFO 95556 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Started MyAppApplication in 6.475 seconds (process running for 6.832)
+2024-07-10T18:54:27.951+10:00  INFO 95556 --- [my-app] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-07-10T18:54:27.951+10:00  INFO 95556 --- [my-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2024-07-10T18:54:27.954+10:00  INFO 95556 --- [my-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2024-07-10T18:54:28.054+10:00  INFO 95556 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=123, password=123, email=lypa520@gmail.com, enabled=false)]
+2024-07-10T18:54:28.880+10:00  INFO 95556 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: EmailService.sendVerificationCode(..) with arguments: [lypa520@gmail.com]
+2024-07-10T18:54:33.795+10:00  INFO 95556 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: EmailService.sendVerificationCode(..) with result: 158161
+2024-07-10T18:54:35.082+10:00  INFO 95556 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <200 OK OK,Result[code=200, message=Success, data=Verification code sent to your email],[]>
+2024-07-10T18:55:12.099+10:00  INFO 95556 --- [my-app] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T18:55:12.103+10:00  INFO 95556 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-07-10T18:55:14.690+10:00  INFO 95556 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2024-07-10T18:55:17.013+10:00  INFO 95973 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Starting MyAppApplication using Java 22.0.1 with PID 95973 (/Users/richard/Documents/Coding/MyApp/target/classes started by richard in /Users/richard/Documents/Coding/MyApp)
+2024-07-10T18:55:17.014+10:00  INFO 95973 --- [my-app] [main] com.demo.myapp.MyAppApplication          : No active profile set, falling back to 1 default profile: "default"
+2024-07-10T18:55:17.416+10:00  INFO 95973 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T18:55:17.417+10:00  INFO 95973 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-07-10T18:55:17.426+10:00  INFO 95973 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 5 ms. Found 0 JPA repository interfaces.
+2024-07-10T18:55:17.436+10:00  INFO 95973 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T18:55:17.437+10:00  INFO 95973 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-07-10T18:55:17.444+10:00  INFO 95973 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1 ms. Found 0 Redis repository interfaces.
+2024-07-10T18:55:17.980+10:00  INFO 95973 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2024-07-10T18:55:17.986+10:00  INFO 95973 --- [my-app] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2024-07-10T18:55:17.986+10:00  INFO 95973 --- [my-app] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.25]
+2024-07-10T18:55:18.007+10:00  INFO 95973 --- [my-app] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2024-07-10T18:55:18.007+10:00  INFO 95973 --- [my-app] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 973 ms
+2024-07-10T18:55:18.310+10:00  INFO 95973 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-07-10T18:55:21.083+10:00  INFO 95973 --- [my-app] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@d0fabc8
+2024-07-10T18:55:21.086+10:00  INFO 95973 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-07-10T18:55:21.129+10:00  INFO 95973 --- [my-app] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-07-10T18:55:21.163+10:00  INFO 95973 --- [my-app] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2024-07-10T18:55:21.179+10:00  INFO 95973 --- [my-app] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-07-10T18:55:21.304+10:00  INFO 95973 --- [my-app] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-07-10T18:55:22.317+10:00  INFO 95973 --- [my-app] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-07-10T18:55:22.318+10:00  INFO 95973 --- [my-app] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T18:55:22.471+10:00  INFO 95973 --- [my-app] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailServiceImpl
+2024-07-10T18:55:22.558+10:00  WARN 95973 --- [my-app] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-07-10T18:55:23.662+10:00  INFO 95973 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2024-07-10T18:55:23.669+10:00  INFO 95973 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Started MyAppApplication in 6.882 seconds (process running for 7.236)
+2024-07-10T18:55:39.424+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-07-10T18:55:39.424+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2024-07-10T18:55:39.427+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+2024-07-10T18:55:39.542+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-1] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=123, password=123, email=lypa520@qq.com, enabled=false)]
+2024-07-10T18:55:40.342+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-1] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <409 CONFLICT Conflict,Result[code=409, message=Email already exists, data=null],[]>
+2024-07-10T18:56:50.758+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-5] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=123, password=123, email=lypa520@qq.com, enabled=false)]
+2024-07-10T18:56:51.540+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-5] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <409 CONFLICT Conflict,Result[code=409, message=Email already exists, data=null],[]>
+2024-07-10T19:14:39.288+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-8] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=123, password=123, email=lypa520@qq.com, enabled=false)]
+2024-07-10T19:14:40.060+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-8] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <409 CONFLICT Conflict,Result[code=409, message=Email already exists, data=null],[]>
+2024-07-10T19:16:35.175+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=123, password=123, email=lypa520@gmail.com, enabled=false)]
+2024-07-10T19:16:35.948+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: EmailService.sendVerificationCode(..) with arguments: [lypa520@gmail.com]
+2024-07-10T19:16:40.416+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: EmailService.sendVerificationCode(..) with result: 421269
+2024-07-10T19:16:41.700+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <200 OK OK,Result[code=200, message=Success, data=Verification code sent to your email],[]>
+2024-07-10T19:18:03.363+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-3] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=123, password=123, email=lypa520@gmail.com, enabled=false)]
+2024-07-10T19:18:04.133+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-3] com.demo.myapp.aop.LoggingAspect         : Entering method: EmailService.sendVerificationCode(..) with arguments: [lypa520@gmail.com]
+2024-07-10T19:18:08.278+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-3] com.demo.myapp.aop.LoggingAspect         : Exiting method: EmailService.sendVerificationCode(..) with result: 293306
+2024-07-10T19:18:08.790+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-3] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <200 OK OK,Result[code=200, message=Success, data=Verification code sent to your email],[]>
+2024-07-10T19:18:37.421+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-7] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=12, password=12, email=lypa520@gmail.com, enabled=false)]
+2024-07-10T19:18:38.191+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-7] com.demo.myapp.aop.LoggingAspect         : Entering method: EmailService.sendVerificationCode(..) with arguments: [lypa520@gmail.com]
+2024-07-10T19:18:42.392+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-7] com.demo.myapp.aop.LoggingAspect         : Exiting method: EmailService.sendVerificationCode(..) with result: 982793
+2024-07-10T19:18:42.902+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-7] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <200 OK OK,Result[code=200, message=Success, data=Verification code sent to your email],[]>
+2024-07-10T19:20:05.672+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-10] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=12, password=12, email=lypa520@gmail.com, enabled=false)]
+2024-07-10T19:20:06.598+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-10] com.demo.myapp.aop.LoggingAspect         : Entering method: EmailService.sendVerificationCode(..) with arguments: [lypa520@gmail.com]
+2024-07-10T19:20:10.881+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-10] com.demo.myapp.aop.LoggingAspect         : Exiting method: EmailService.sendVerificationCode(..) with result: 475889
+2024-07-10T19:20:11.392+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-10] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <200 OK OK,Result[code=200, message=Success, data=Verification code sent to your email],[]>
+2024-07-10T19:21:20.900+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-4] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=12, password=12, email=lypa520@gmail.com, enabled=false)]
+2024-07-10T19:21:21.675+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-4] com.demo.myapp.aop.LoggingAspect         : Entering method: EmailService.sendVerificationCode(..) with arguments: [lypa520@gmail.com]
+2024-07-10T19:21:25.935+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-4] com.demo.myapp.aop.LoggingAspect         : Exiting method: EmailService.sendVerificationCode(..) with result: 990235
+2024-07-10T19:21:26.448+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-4] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <200 OK OK,Result[code=200, message=Success, data=Verification code sent to your email],[]>
+2024-07-10T19:21:56.512+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-6] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=123, password=123, email=lypa520@gmail.com, enabled=false)]
+2024-07-10T19:21:57.320+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-6] com.demo.myapp.aop.LoggingAspect         : Entering method: EmailService.sendVerificationCode(..) with arguments: [lypa520@gmail.com]
+2024-07-10T19:22:01.589+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-6] com.demo.myapp.aop.LoggingAspect         : Exiting method: EmailService.sendVerificationCode(..) with result: 455633
+2024-07-10T19:22:02.099+10:00  INFO 95973 --- [my-app] [http-nio-8080-exec-6] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <200 OK OK,Result[code=200, message=Success, data=Verification code sent to your email],[]>
+2024-07-10T19:23:55.579+10:00  INFO 95973 --- [my-app] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T19:23:55.585+10:00  INFO 95973 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-07-10T19:23:58.187+10:00  INFO 95973 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2024-07-10T19:49:42.029+10:00  INFO 7054 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Starting MyAppApplication using Java 22.0.1 with PID 7054 (/Users/richard/Documents/Coding/MyApp/target/classes started by richard in /Users/richard/Documents/Coding/MyApp)
+2024-07-10T19:49:42.034+10:00  INFO 7054 --- [my-app] [main] com.demo.myapp.MyAppApplication          : No active profile set, falling back to 1 default profile: "default"
+2024-07-10T19:49:43.870+10:00  INFO 7054 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T19:49:43.871+10:00  INFO 7054 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-07-10T19:49:43.890+10:00  INFO 7054 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 10 ms. Found 0 JPA repository interfaces.
+2024-07-10T19:49:43.911+10:00  INFO 7054 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T19:49:43.912+10:00  INFO 7054 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-07-10T19:49:43.925+10:00  INFO 7054 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
+2024-07-10T19:49:45.074+10:00  INFO 7054 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2024-07-10T19:49:45.082+10:00  INFO 7054 --- [my-app] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2024-07-10T19:49:45.082+10:00  INFO 7054 --- [my-app] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.25]
+2024-07-10T19:49:45.130+10:00  INFO 7054 --- [my-app] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2024-07-10T19:49:45.131+10:00  INFO 7054 --- [my-app] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3035 ms
+2024-07-10T19:49:45.876+10:00  INFO 7054 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-07-10T19:49:49.134+10:00  INFO 7054 --- [my-app] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@4119346d
+2024-07-10T19:49:49.151+10:00  INFO 7054 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-07-10T19:49:49.208+10:00  INFO 7054 --- [my-app] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-07-10T19:49:49.258+10:00  INFO 7054 --- [my-app] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2024-07-10T19:49:49.290+10:00  INFO 7054 --- [my-app] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-07-10T19:49:49.590+10:00  INFO 7054 --- [my-app] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-07-10T19:49:51.061+10:00  INFO 7054 --- [my-app] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-07-10T19:49:51.064+10:00  INFO 7054 --- [my-app] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T19:49:51.357+10:00  INFO 7054 --- [my-app] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailServiceImpl
+2024-07-10T19:49:51.526+10:00  WARN 7054 --- [my-app] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-07-10T19:49:53.079+10:00  INFO 7054 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2024-07-10T19:49:53.088+10:00  INFO 7054 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Started MyAppApplication in 11.533 seconds (process running for 12.85)
+2024-07-10T19:51:23.299+10:00  INFO 7054 --- [my-app] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-07-10T19:51:23.301+10:00  INFO 7054 --- [my-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2024-07-10T19:51:23.308+10:00  INFO 7054 --- [my-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 7 ms
+2024-07-10T19:51:23.482+10:00  INFO 7054 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username= 123, password=123, email=lypa520@gmail.com, enabled=false)]
+2024-07-10T19:51:24.525+10:00  INFO 7054 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: EmailService.sendVerificationCode(..) with arguments: [lypa520@gmail.com]
+2024-07-10T19:51:29.387+10:00  INFO 7054 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: EmailService.sendVerificationCode(..) with result: 454793
+2024-07-10T19:51:30.827+10:00  INFO 7054 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <200 OK OK,Result[code=200, message=Success, data=Verification code sent to your email],[]>
+2024-07-10T19:57:57.122+10:00  INFO 7054 --- [my-app] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T19:57:57.181+10:00  INFO 7054 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-07-10T19:58:01.395+10:00  INFO 7054 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2024-07-10T20:02:08.337+10:00  INFO 9248 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Starting MyAppApplication using Java 22.0.1 with PID 9248 (/Users/richard/Documents/Coding/MyApp/target/classes started by richard in /Users/richard/Documents/Coding/MyApp)
+2024-07-10T20:02:08.338+10:00  INFO 9248 --- [my-app] [main] com.demo.myapp.MyAppApplication          : No active profile set, falling back to 1 default profile: "default"
+2024-07-10T20:02:08.755+10:00  INFO 9248 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T20:02:08.756+10:00  INFO 9248 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-07-10T20:02:08.763+10:00  INFO 9248 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2024-07-10T20:02:08.772+10:00  INFO 9248 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2024-07-10T20:02:08.773+10:00  INFO 9248 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-07-10T20:02:08.779+10:00  INFO 9248 --- [my-app] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1 ms. Found 0 Redis repository interfaces.
+2024-07-10T20:02:09.285+10:00  INFO 9248 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2024-07-10T20:02:09.290+10:00  INFO 9248 --- [my-app] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2024-07-10T20:02:09.290+10:00  INFO 9248 --- [my-app] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.25]
+2024-07-10T20:02:09.310+10:00  INFO 9248 --- [my-app] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2024-07-10T20:02:09.311+10:00  INFO 9248 --- [my-app] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 951 ms
+2024-07-10T20:02:09.619+10:00  INFO 9248 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-07-10T20:02:12.796+10:00  INFO 9248 --- [my-app] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@30e2016a
+2024-07-10T20:02:12.798+10:00  INFO 9248 --- [my-app] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-07-10T20:02:12.829+10:00  INFO 9248 --- [my-app] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-07-10T20:02:12.864+10:00  INFO 9248 --- [my-app] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2024-07-10T20:02:12.884+10:00  INFO 9248 --- [my-app] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-07-10T20:02:13.028+10:00  INFO 9248 --- [my-app] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-07-10T20:02:14.053+10:00  INFO 9248 --- [my-app] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-07-10T20:02:14.054+10:00  INFO 9248 --- [my-app] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T20:02:14.212+10:00  INFO 9248 --- [my-app] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailServiceImpl
+2024-07-10T20:02:14.258+10:00  WARN 9248 --- [my-app] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-07-10T20:02:15.036+10:00  INFO 9248 --- [my-app] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2024-07-10T20:02:15.041+10:00  INFO 9248 --- [my-app] [main] com.demo.myapp.MyAppApplication          : Started MyAppApplication in 6.916 seconds (process running for 7.469)
+2024-07-10T20:02:41.269+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-07-10T20:02:41.270+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2024-07-10T20:02:41.273+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+2024-07-10T20:02:41.412+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=12, password=123, email=lypa520@gmail.com, enabled=false)]
+2024-07-10T20:02:42.193+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Entering method: EmailService.sendVerificationCode(..) with arguments: [lypa520@gmail.com]
+2024-07-10T20:02:46.672+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: EmailService.sendVerificationCode(..) with result: 331152
+2024-07-10T20:02:48.085+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-2] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <200 OK OK,Result[code=200, message=Success, data=Verification code sent to your email],[]>
+2024-07-10T20:03:49.223+10:00  WARN 9248 --- [my-app] [http-nio-8080-exec-5] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.bind.MissingServletRequestParameterException: Required request parameter 'email' for method parameter type String is not present]
+2024-07-10T20:06:54.604+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-7] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.verifyCode(..) with arguments: [lypa520@gmail.com, 331152]
+2024-07-10T20:06:54.880+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-7] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.verifyCode(..) with result: <400 BAD_REQUEST Bad Request,Result[code=400, message=Invalid verification code, data=null],[]>
+2024-07-10T20:07:20.291+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-9] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.register(..) with arguments: [User(id=null, username=123, password=123, email=lypa520@gmail.com, enabled=false)]
+2024-07-10T20:07:21.057+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-9] com.demo.myapp.aop.LoggingAspect         : Entering method: EmailService.sendVerificationCode(..) with arguments: [lypa520@gmail.com]
+2024-07-10T20:07:25.240+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-9] com.demo.myapp.aop.LoggingAspect         : Exiting method: EmailService.sendVerificationCode(..) with result: 111816
+2024-07-10T20:07:25.751+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-9] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.register(..) with result: <200 OK OK,Result[code=200, message=Success, data=Verification code sent to your email],[]>
+2024-07-10T20:07:43.619+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-1] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.verifyCode(..) with arguments: [lypa520@gmail.com, 111816]
+2024-07-10T20:07:46.199+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-1] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.verifyCode(..) with result: <200 OK OK,Result[code=200, message=Success, data=Registration successful],[]>
+2024-07-10T20:13:36.955+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-4] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.login(..) with arguments: [User(id=null, username=123, password=123, email=null, enabled=false)]
+2024-07-10T20:13:37.079+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-4] com.demo.myapp.aop.LoggingAspect         : Entering method: UserDetailServiceImpl.loadUserByUsername(..) with arguments: [123]
+2024-07-10T20:13:37.849+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-4] com.demo.myapp.aop.LoggingAspect         : Exiting method: UserDetailServiceImpl.loadUserByUsername(..) with result: LoginUser(user=User(id=4, username=123, password=$2a$10$DyCX6hRfK5b2IqOmH8IsA.cuy7ymXWhpqUKX/0J/Kv0sqvHNB48Bu, email=lypa520@gmail.com, enabled=true), permissions=[READ_PRIVILEGE], authorities=[READ_PRIVILEGE])
+2024-07-10T20:13:38.249+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-4] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.login(..) with result: <200 OK OK,Result[code=200, message=Success, data=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyQ2xhaW1zIjp7InBhc3N3b3JkIjoiJDJhJDEwJER5Q1g2aFJmSzViMklxT21IOElzQS5jdXk3eW1YV2hwcVVLWC8wSi9LdjBzcXZITkI0OEJ1IiwidXNlcm5hbWUiOiIxMjMifSwiaXNzIjoiTXlBcHAiLCJpYXQiOjE3MjA2MDY0MTcsImV4cCI6MTcyMDY5MjgxN30.qTWIu9vf4lHl5QXvIJ5fOvhHpfW9dE1qZUZgj0FuTJg],[]>
+2024-07-10T20:14:53.077+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-7] com.demo.myapp.aop.LoggingAspect         : Entering method: LoginServiceImpl.login(..) with arguments: [User(id=null, username=123, password=123, email=null, enabled=false)]
+2024-07-10T20:14:53.079+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-7] com.demo.myapp.aop.LoggingAspect         : Entering method: UserDetailServiceImpl.loadUserByUsername(..) with arguments: [123]
+2024-07-10T20:14:53.841+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-7] com.demo.myapp.aop.LoggingAspect         : Exiting method: UserDetailServiceImpl.loadUserByUsername(..) with result: LoginUser(user=User(id=4, username=123, password=$2a$10$DyCX6hRfK5b2IqOmH8IsA.cuy7ymXWhpqUKX/0J/Kv0sqvHNB48Bu, email=lypa520@gmail.com, enabled=true), permissions=[READ_PRIVILEGE], authorities=[READ_PRIVILEGE])
+2024-07-10T20:14:54.228+10:00  INFO 9248 --- [my-app] [http-nio-8080-exec-7] com.demo.myapp.aop.LoggingAspect         : Exiting method: LoginServiceImpl.login(..) with result: <200 OK OK,Result[code=200, message=Success, data=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyQ2xhaW1zIjp7InBhc3N3b3JkIjoiJDJhJDEwJER5Q1g2aFJmSzViMklxT21IOElzQS5jdXk3eW1YV2hwcVVLWC8wSi9LdjBzcXZITkI0OEJ1IiwidXNlcm5hbWUiOiIxMjMifSwiaXNzIjoiTXlBcHAiLCJpYXQiOjE3MjA2MDY0OTMsImV4cCI6MTcyMDY5Mjg5M30.Crccciv1xAh5cz4rVtIPDc9U3rJ9vTHoJO353op7qdY],[]>
+2024-07-10T20:26:50.380+10:00  INFO 9248 --- [my-app] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-07-10T20:26:50.386+10:00  INFO 9248 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2024-07-10T20:26:53.206+10:00  INFO 9248 --- [my-app] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
