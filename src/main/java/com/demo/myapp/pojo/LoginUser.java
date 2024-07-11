@@ -22,13 +22,15 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LoginUser implements UserDetails {
     private User user;
+    private List<String> roles;
     private List<String> permissions;//需要重新封装
     @JsonIgnore // 处理redis序列化时的问题,不序列化authorities.注意：用jackson
     private transient List<SimpleGrantedAuthority> authorities;// getAuthorities()
 
-    public LoginUser(User user, List<String> permissions) {
+    public LoginUser(User user, List<String> permissions, List<String> roles) {
         this.user = user;
         this.permissions = permissions;
+        this.roles = roles;
     }
 
     @Override

@@ -9,6 +9,11 @@ spring:
     username: ${Database_Username}
     password: password: ${Database_Password}
 
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect # set MySQL8Dialect for MySQL 8.x
+
   # springSecurity
   security:
     user:

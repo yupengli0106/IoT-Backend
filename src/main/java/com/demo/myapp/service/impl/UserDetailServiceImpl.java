@@ -1,9 +1,11 @@
 package com.demo.myapp.service.impl;
 
 import com.demo.myapp.mapper.PermissionMapper;
+import com.demo.myapp.mapper.RoleMapper;
 import com.demo.myapp.mapper.UserMapper;
 import com.demo.myapp.pojo.LoginUser;
 import com.demo.myapp.pojo.Permission;
+import com.demo.myapp.pojo.Role;
 import com.demo.myapp.pojo.User;
 import jakarta.annotation.Resource;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +28,8 @@ public class UserDetailServiceImpl implements UserDetailsService{
     UserMapper userMapper;
     @Resource
     PermissionMapper permissionMapper;
+    @Resource
+    RoleMapper roleMapper;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -33,12 +37,11 @@ public class UserDetailServiceImpl implements UserDetailsService{
         if (user == null) {
             throw new UsernameNotFoundException("User does not exist");
         }else {
-            // TODO: Get user's permissions from database
-//            List<String> permissions = new ArrayList<>();
-//            permissions.add("admin");
             // query user's permissions from database
             List<String> permissions = permissionMapper.findPermissionsByUsername(username);
-            return new LoginUser(user, permissions);
+            // query user's roles from database
+            List<String> roles = roleMapper.findRolesByUserId(user.getId());
+            return new LoginUser(user, permissions, roles);
         }
     }
 }

@@ -59,7 +59,13 @@ public class LoginServiceImpl implements LoginService {
             String token = JwtUtil.generateToken(claims);
             // Store the token in the redis for 1 hour
             redisTemplate.opsForValue().set(token,loginUser, 1, TimeUnit.HOURS);
-            return ResponseEntity.ok(Result.success(token));
+
+            // 创建包含token和roles的响应
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("roles", loginUser.getRoles());
+
+            return ResponseEntity.ok(Result.success(response));
         }else {
             // If the authentication fails, return an error message
             return ResponseEntity.status(403).body(Result.error(403,"Password or Username is incorrect"));
