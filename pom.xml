@@ -115,12 +115,6 @@
             <artifactId>spring-boot-starter-logging</artifactId>
         </dependency>
 
-        <!--rabbitmq-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
-        </dependency>
-
         <!--mqtt-->
         <dependency>
             <groupId>org.eclipse.paho</groupId>

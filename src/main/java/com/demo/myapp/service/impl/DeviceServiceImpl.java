@@ -4,6 +4,7 @@ import com.demo.myapp.mapper.DeviceMapper;
 import com.demo.myapp.pojo.Device;
 import com.demo.myapp.service.DeviceService;
 import jakarta.annotation.Resource;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class DeviceServiceImpl implements DeviceService {
     private DeviceMapper deviceMapper;
 
     @Resource
-    private RabbitMQProducerService rabbitMQProducerService;
+    private MqttService mqttService;
 
     @Override
     public List<Device> getAllDevices() {
@@ -53,8 +54,13 @@ public class DeviceServiceImpl implements DeviceService {
         if (device != null) {
             device.setStatus(command);
             deviceMapper.updateDevice(device);
-            // 使用RabbitMQ发送控制命令
-            rabbitMQProducerService.sendMessage("Device ID: " + id + " Command: " + command);
+            // 使用MQTT发送控制命令
+            try {
+                String topic = "home/" + device.getType() + "/" + id + "/control";
+                mqttService.publish(topic, command);
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

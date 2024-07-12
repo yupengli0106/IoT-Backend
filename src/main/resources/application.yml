@@ -41,12 +41,13 @@ spring:
             required: true
     port: 587
 
-  # RabbitMQ
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+
+# MQTT
+mqtt:
+  broker: tcp://localhost:1883
+  clientId: MyMqttClient
+  username: guest
+  password: guest
 
 
 # Mybatis
