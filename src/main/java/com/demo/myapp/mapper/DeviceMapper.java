@@ -29,9 +29,9 @@ public interface DeviceMapper {
     @Delete("DELETE FROM devices WHERE id = #{id}")
     void deleteDeviceById(Long id);
 
-    @Select("SELECT * FROM devices LIMIT #{pageSize} OFFSET #{offset}")
-    List<Device> findDevicesByPage(@Param("pageSize") int pageSize, @Param("offset") int offset);
+    @Select("SELECT * FROM devices WHERE user_id = #{userId} LIMIT #{pageSize} OFFSET #{offset}")
+    List<Device> findDevicesByPage(@Param("userId") Long userId, @Param("pageSize") int pageSize, @Param("offset") int offset);
 
-    @Select("SELECT COUNT(*) FROM devices")
-    long countDevices();
+    @Select("SELECT COUNT(*) FROM devices WHERE user_id = #{userId}")
+    long countDevices(@Param("userId") Long userId);
 }
