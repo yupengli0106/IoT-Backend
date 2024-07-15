@@ -3,6 +3,12 @@ package com.demo.myapp.controller;
 import com.demo.myapp.pojo.Device;
 import com.demo.myapp.service.DeviceService;
 import jakarta.annotation.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -19,6 +25,8 @@ public class DeviceController {
 
     @Resource
     private DeviceService deviceService;
+    @Resource
+    private PagedResourcesAssembler<Device> pagedResourcesAssembler; // 分页资源装配器
 
     @GetMapping("/get_all")
     public List<Device> getAllDevices() {
@@ -48,6 +56,13 @@ public class DeviceController {
     @PostMapping("/{id}/control")
     public void controlDevice(@PathVariable Long id, @RequestParam String command) {
         deviceService.controlDevice(id, command);
+    }
+
+    @GetMapping("/page/{page}/size/{size}")
+    public PagedModel<EntityModel<Device>> getDevicesByPage(@PathVariable int page, @PathVariable int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Device> devicePage = deviceService.getDevicesByPage(pageable);
+        return pagedResourcesAssembler.toModel(devicePage);
     }
 }
 

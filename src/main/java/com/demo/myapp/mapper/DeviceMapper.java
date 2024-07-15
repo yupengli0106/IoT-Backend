@@ -2,6 +2,7 @@ package com.demo.myapp.mapper;
 
 import com.demo.myapp.pojo.Device;
 import org.apache.ibatis.annotations.*;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -27,4 +28,10 @@ public interface DeviceMapper {
 
     @Delete("DELETE FROM devices WHERE id = #{id}")
     void deleteDeviceById(Long id);
+
+    @Select("SELECT * FROM devices LIMIT #{pageSize} OFFSET #{offset}")
+    List<Device> findDevicesByPage(@Param("pageSize") int pageSize, @Param("offset") int offset);
+
+    @Select("SELECT COUNT(*) FROM devices")
+    long countDevices();
 }

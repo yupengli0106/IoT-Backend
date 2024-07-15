@@ -5,6 +5,9 @@ import com.demo.myapp.pojo.Device;
 import com.demo.myapp.service.DeviceService;
 import jakarta.annotation.Resource;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -62,5 +65,17 @@ public class DeviceServiceImpl implements DeviceService {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public Page<Device> getDevicesByPage(Pageable pageable) {
+        int pageSize = pageable.getPageSize();
+        int offset = pageable.getPageNumber() * pageSize;
+        long totalDevices = deviceMapper.countDevices(); // 计算设备的总数
+        if (offset >= totalDevices) { // 如果偏移量大于等于设备总数，返回空列表
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+        List<Device> devices = deviceMapper.findDevicesByPage(pageSize, offset);
+        return new PageImpl<>(devices, pageable, totalDevices);
     }
 }
