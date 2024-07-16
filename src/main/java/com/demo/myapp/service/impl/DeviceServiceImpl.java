@@ -70,7 +70,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    public Page<Device> getDevicesByPage(Pageable pageable) {
+    public Page<Device> getDevicesByPage(Pageable pageable) { // TODO: 后续可以改进，将数据存在redis中，提高查询速度？
         //get current user id
         LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         long currentUserId = loginUser.getUser().getId();

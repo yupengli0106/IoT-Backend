@@ -6,7 +6,9 @@ import com.demo.myapp.pojo.User;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +27,9 @@ public class UserMapperTest {
     BCryptPasswordEncoder bCryptPasswordEncoder;
     @Resource
     PermissionMapper permissionMapper;
+    @Resource
+    JdbcTemplate jdbcTemplate;
+
 
     @Test
     public void testBCrypt() {
@@ -54,11 +59,19 @@ public class UserMapperTest {
 
 
     @Test
+    @Transactional
     public void testAddUser() {
+        // delete the user if it exists
+        jdbcTemplate.update("DELETE FROM users WHERE username = ?", "test1");
+
+        // add a new user for testing
         User user = new User("test1", "123123a", "test1@test1.com");
         userMapper.insertUser(user);
         User newUser = userMapper.findByUsername("test1");
         assert newUser.getUsername().equals("test1");
+
+        // delete the user after testing
+        jdbcTemplate.update("DELETE FROM users WHERE username = ?", "test1");
     }
 
     @Test
