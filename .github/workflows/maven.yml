@@ -32,6 +32,12 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build with Maven
+      env:
+        Aliyun_IP: ${{ secrets.ALIYUN_IP }}
+        Database_Username: ${{ secrets.DATABASE_USERNAME }}
+        Database_Password: ${{ secrets.DATABASE_PASSWORD }}
+        Gmail_Username: ${{ secrets.GMAIL_USERNAME }}
+        Gmail_App_Password: ${{ secrets.GMAIL_APP_PASSWORD }}
       run: mvn -B package --file pom.xml
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
