@@ -44,10 +44,10 @@ spring:
 
 # MQTT
 mqtt:
-  broker: tcp://localhost:1883
+  broker: tcp://${Aliyun_IP}:1883
   clientId: MyMqttClient
-  username: guest
-  password: guest
+  username: ${Mqtt_Username}
+  password: ${Mqtt_Password}
 
 
 # Mybatis

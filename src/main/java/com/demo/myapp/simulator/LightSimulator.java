@@ -26,7 +26,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 public class LightSimulator {
 
-    private static final String BROKER = "tcp://localhost:1883"; // Mosquitto服务地址
+    private static final String BROKER = "tcp://localhost:1883"; //TODO: Mosquitto服务ip地址
     private static final String CLIENT_ID = MqttClient.generateClientId();
     private static final String DEVICE_TYPE = "Light"; // 设备类型(需要与数据库中的设备类型保持一致)
     private static final Long DEVICE_ID = 1L; // 设备ID（需要与数据库中的设备ID保持一致）
@@ -40,7 +40,7 @@ public class LightSimulator {
             MqttConnectOptions connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
             System.out.println("Connecting to broker: " + BROKER);
-
+            // TODO: 请在这里添加用户名和密码
             client.connect(connOpts);
             System.out.println("Connected successfully\n");
 

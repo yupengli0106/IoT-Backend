@@ -23,13 +23,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    # 配置mosquitto服务允许mtqq通讯
-    services:
-      mosquitto:
-        image: eclipse-mosquitto:1.6.12
-        ports:
-          - 1883:1883
-
     steps:
     - uses: actions/checkout@v4  #clone仓库到GitHub的runner上
     - name: Set up JDK 22
@@ -52,6 +45,8 @@ jobs:
         Database_Password: ${{ secrets.DATABASE_PASSWORD }}
         Gmail_Username: ${{ secrets.GMAIL_USERNAME }}
         Gmail_App_Password: ${{ secrets.GMAIL_APP_PASSWORD }}
+        Mqtt_Username: ${{ secrets.MQTT_USERNAME }}
+        Mqtt_Password: ${{ secrets.MQTT_PASSWORD }}
       run: mvn -B package --file pom.xml
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive

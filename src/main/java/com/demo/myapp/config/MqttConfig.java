@@ -4,6 +4,8 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,15 +31,24 @@ public class MqttConfig {
     private String password;
 
     @Bean
-    public MqttClient mqttClient() throws MqttException {
-        MqttClient client = new MqttClient(broker, clientId, new MemoryPersistence());
+    public MqttClient mqttClient(){
+        final Logger logger = LoggerFactory.getLogger(MqttConfig.class);
 
-        MqttConnectOptions connOpts = new MqttConnectOptions();
-        connOpts.setCleanSession(true);
-        connOpts.setUserName(username);
-        connOpts.setPassword(password.toCharArray());
+        MqttClient client = null;
+        try {
+            client = new MqttClient(broker, clientId, new MemoryPersistence());
 
-        client.connect(connOpts);
+            MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts.setCleanSession(true);
+            connOpts.setUserName(username);
+            connOpts.setPassword(password.toCharArray());
+
+            client.connect(connOpts);
+            logger.info("Connected to MQTT broker successfully");
+        } catch (MqttException e) {
+            e.printStackTrace();
+            logger.error("Mqtt client connection failed: {}", e.getMessage());
+        }
 
         return client;
     }
