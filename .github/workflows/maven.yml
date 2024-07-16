@@ -31,6 +31,13 @@ jobs:
         java-version: '22'
         distribution: 'temurin'
         cache: maven
+    - name: Test database connection
+      run:
+        mysql -u ${Database_Username} -p${Database_Password} -h ${Aliyun_IP} -D myappDB
+      env:
+        Aliyun_IP: ${{ secrets.ALIYUN_IP }}
+        Database_Username: ${{ secrets.DATABASE_USERNAME }}
+        Database_Password: ${{ secrets.DATABASE_PASSWORD }}
     - name: Build with Maven
       env:
         Aliyun_IP: ${{ secrets.ALIYUN_IP }}
