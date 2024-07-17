@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  Backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - MySQL
+      - Redis
+      - Eclipse-mosquitto
+    environment:
+      - Aliyun_IP_FILE=/run/secrets/Aliyun_IP
+      - Redis_Password_FILE=/run/secrets/Redis_Password
+      - Database_User_FILE=/run/secrets/Database_User
+      - Database_Password_FILE=/run/secrets/Database_Password
+      - Mosquitto_Username_FILE=/run/secrets/Mosquitto_Username
+      - Mosquitto_Password_FILE=/run/secrets/Mosquitto_Password
+      - Gmail_Username_FILE=/run/secrets/Gmail_Username
+      - Gmail_App_Password_FILE=/run/secrets/Gmail_App_Password
+    secrets:
+      - Aliyun_IP
+      - Redis_Password
+      - Database_User
+      - Database_Password
+      - Mosquitto_Username
+      - Mosquitto_Password
+      - Gmail_Username
+      - Gmail_App_Password
+    ports:
+      - "8080:8080"
+
+  MySQL:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/Database_Password
+    secrets:
+      - Database_Password
+    ports:
+      - "3306:3306"
+
+  Redis:
+    image: redis:latest
+    environment:
+      REDIS_PASSWORD_FILE: /run/secrets/Redis_Password
+    secrets:
+      - Redis_Password
+    ports:
+      - "6379:6379"
+
+  Eclipse-mosquitto:
+    image: eclipse-mosquitto
+    environment:
+      - MOSQUITTO_USERNAME_FILE=/run/secrets/Mosquitto_Username
+      - MOSQUITTO_PASSWORD_FILE=/run/secrets/Mosquitto_Password
+    secrets:
+      - Mosquitto_Username
+      - Mosquitto_Password
+    ports:
+      - "1883:1883"
+
+secrets:
+  Aliyun_IP:
+    external: true
+  Redis_Password:
+    external: true
+  Database_User:
+    external: true
+  Database_Password:
+    external: true
+  Mosquitto_Username:
+    external: true
+  Mosquitto_Password:
+    external: true
+  Gmail_Username:
+    external: true
+  Gmail_App_Password:
+    external: true
