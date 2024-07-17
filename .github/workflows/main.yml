@@ -1,0 +1,17 @@
+name: View GITHUB_ENV Content
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+
+      - name: Set IMAGE_TAG environment variable
+        run: echo "IMAGE_TAG=MyApp-$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
+      - name: View GITHUB_ENV content
+        run: cat $GITHUB_ENV
