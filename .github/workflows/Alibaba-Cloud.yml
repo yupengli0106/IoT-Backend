@@ -20,7 +20,7 @@ jobs:
           ssh-private-key: ${{ secrets.ALIYUN_SSH }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v4.3.4
+        uses: actions/download-artifact@v4.1.8
         with:
           name: image-tag
           path: ./artifacts
