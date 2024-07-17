@@ -32,7 +32,7 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Test database connection
+    - name: Test MySQL connection
       run:
         mysql -u ${Database_Username} -p${Database_Password} -h ${Aliyun_IP} -D myappDB
       env:
@@ -40,12 +40,18 @@ jobs:
         Database_Username: ${{ secrets.DATABASE_USERNAME }}
         Database_Password: ${{ secrets.DATABASE_PASSWORD }}
 
+    - name: Install Redis CLI
+      run: sudo apt-get update && sudo apt-get install -y redis-tools
+
     - name: Test Redis connection
       run:
         redis-cli -h ${Aliyun_IP} -a ${Redis_Password}
       env:
         Aliyun_IP: ${{ secrets.ALIYUN_IP }}
         Redis_Password: ${{ secrets.REDIS_PASSWORD }}
+
+    - name: Install Mosquitto CLI
+      run: sudo apt-get install -y mosquitto-clients
 
     - name: Test MQTT connection
       run:
