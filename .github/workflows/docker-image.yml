@@ -18,7 +18,7 @@ jobs:
     #设置环境变量（当前的系统时间）
     - name: Set current date as environment variable
       id: date
-      run: echo "::set-output name=date::$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+      run: echo "::set-output name=date::$(date +%Y%m%d%H%M%S)"
 
     #兼容可以在不同的操作系统环境中运行
     - name: Set up QEMU
@@ -39,7 +39,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: yupengli0106/myapp:MyApp-${{ env.date }}
+        tags: yupengli0106/myapp:MyApp-${{ steps.date.outputs.date }}
 
 
     - name: Log out from Docker Hub
