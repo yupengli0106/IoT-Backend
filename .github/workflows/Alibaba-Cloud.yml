@@ -1,0 +1,48 @@
+name: Alibaba Cloud CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.7
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ALIYUN_SSH }}
+
+      - name: Get Docker image tag
+        id: get_tag
+        run: echo "TAG=${{ github.event.head_commit.id }}" >> $GITHUB_ENV
+
+      - name: Deploy to Aliyun
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          ALIYUN_USER: ${{ secrets.ALIYUN_USER }}
+          ALIYUN_IP: ${{ secrets.ALIYUN_IP }}
+          IMAGE_TAG: ${{ steps.get_tag.outputs.tag }}
+        run: |
+          echo "Starting deployment..."
+
+          # 登录Docker
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+
+          # 拉取最新的Docker镜像
+          docker pull yupengli0106/myapp:${{ env.IMAGE_TAG }}
+
+          # SSH到服务器并部署
+          ssh $ALIYUN_USER@$ALIYUN_SERVER << 'ENDSSH'
+          docker stop my_app_container || true
+          docker rm my_app_container || true
+          docker run -d --name my_app_container -p 80:80 yupengli0106/myapp:${{ env.IMAGE_TAG }}
+          ENDSSH
+
+          echo "Deployment finished."
