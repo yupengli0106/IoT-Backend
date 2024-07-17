@@ -20,7 +20,8 @@ jobs:
 
       - name: Get Docker image tag
         id: get_tag
-        run: echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
+        run: echo "IMAGE_TAG=$(grep 'IMAGE_TAG' $GITHUB_ENV | cut -d'=' -f2)" >> $GITHUB_ENV
+
 
       - name: Deploy to Aliyun
         env:

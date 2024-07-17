@@ -44,7 +44,7 @@ jobs:
     #输出当前打包好的镜像给下一步的CD用来部署
     - name: Set docker image output
       id: image_tag
-      run: echo "::set-output name=tag::MyApp-${{ env.date }}"
+      run: echo "IMAGE_TAG=MyApp-${{ env.date }}" >> $GITHUB_ENV
 
     - name: Log out from Docker Hub
       run: docker logout
