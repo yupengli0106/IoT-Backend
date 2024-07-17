@@ -25,6 +25,7 @@ spring:
     redis:
       port: 6379
       host: ${Aliyun_IP}
+      password: ${Redis_Password}
 
   # use gmail to send email
   mail:
