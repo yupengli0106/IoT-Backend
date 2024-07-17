@@ -18,10 +18,18 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.ALIYUN_SSH }}
 
-      - name: Get Docker image tag
-        id: get_tag
-        run: echo "IMAGE_TAG=$(grep 'IMAGE_TAG' $GITHUB_ENV | cut -d'=' -f2)" >> $GITHUB_ENV
+      - name: Download artifact
+        uses: actions/download-artifact@v4.3.4
+        with:
+          name: image-tag
+          path: ./artifacts
 
+      - name: Read image tag
+        id: read_tag
+        run: |
+          IMAGE_TAG=$(cat ./artifacts/image_tag.txt)
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "::set-output name=image_tag::$IMAGE_TAG"
 
       - name: Deploy to Aliyun
         env:
@@ -29,7 +37,8 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           ALIYUN_USER: ${{ secrets.ALIYUN_USER }}
           ALIYUN_IP: ${{ secrets.ALIYUN_IP }}
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          IMAGE_TAG: ${{ steps.read_tag.outputs.image_tag }}
+
         run: |
           echo "Starting deployment..."
 

@@ -44,7 +44,15 @@ jobs:
     #输出当前打包好的镜像给下一步的CD用来部署
     - name: Set docker image output
       id: image_tag
-      run: echo "IMAGE_TAG=MyApp-${{ env.date }}" >> $GITHUB_ENV
+      run: |
+        echo "IMAGE_TAG=MyApp-${{ env.date }}" >> $GITHUB_ENV
+        echo "IMAGE_TAG=MyApp-${{ env.date }}" > image_tag.txt
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4.3.4
+      with:
+        name: image-tag
+        path: image_tag.txt
 
     - name: Log out from Docker Hub
       run: docker logout
