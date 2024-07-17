@@ -1,9 +1,10 @@
 name: Alibaba Cloud CD
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Docker Image CI"]
+    types:
+      - completed
 
 jobs:
   deploy:
