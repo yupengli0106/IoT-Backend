@@ -20,7 +20,7 @@ jobs:
 
       - name: Get Docker image tag
         id: get_tag
-        run: echo "TAG=${{ github.event.head_commit.id }}" >> $GITHUB_ENV
+        run: echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Deploy to Aliyun
         env:
@@ -33,16 +33,16 @@ jobs:
           echo "Starting deployment..."
 
           # 登录Docker
-          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
 
           # 拉取最新的Docker镜像
-          docker pull yupengli0106/myapp:${{ env.IMAGE_TAG }}
+          docker pull yupengli0106/myapp:${IMAGE_TAG}
 
           # SSH到服务器并部署
           ssh $ALIYUN_USER@$ALIYUN_SERVER << 'ENDSSH'
           docker stop my_app_container || true
           docker rm my_app_container || true
-          docker run -d --name my_app_container -p 80:80 yupengli0106/myapp:${{ env.IMAGE_TAG }}
+          docker run -d --name my_app_container -p 80:80 yupengli0106/myapp:${IMAGE_TAG}
           ENDSSH
 
           echo "Deployment finished."
