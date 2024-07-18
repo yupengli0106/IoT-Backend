@@ -1,9 +1,11 @@
 name: Alibaba Cloud CD
 
+#在Docker Image CI这个workflow完成后再运行当前这个workflow
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Docker Image CI"]
+    types:
+      - completed
 
 jobs:
   deploy:
@@ -13,36 +15,51 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.7
 
+      # 在GitHub Actions的运行环境中创建一个SSH代理，并将阿里云的私钥加载到这个SSH代理中
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.ALIYUN_SSH }}
 
-      - name: Get Docker image tag
+      # 通过ssh-keyscan命令获取远程服务器的公钥，并将其添加到运行环境的~/.ssh/known_hosts文件中
+      - name: Add SSH key to known_hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.ALIYUN_IP }} >> ~/.ssh/known_hosts
+
+      # 登陆到docker后续可以使用docker pull拉取镜像
+      - name: Log in to Docker
+        uses: docker/login-action@v3.2.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Install  jq tool
+        run:
+          sudo apt-get install -y curl jq
+
+      # 从Docker Hub中获取在上一步Docker Image CI最新push上去的镜像
+      - name: Curl to get latest image tag from Docker Hub
         id: get_tag
-        run: echo "TAG=${{ github.event.head_commit.id }}" >> $GITHUB_ENV
+        run: |
+          # 通过用户名和密码登陆获取token
+          TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKERHUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKERHUB_PASSWORD }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
+          REPO_NAME="myapp"
+          # 携带token去使用docker hub api获取最新镜像的名称
+          LATEST_TAG=$(curl -s -H "Authorization: JWT $TOKEN" "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/$REPO_NAME/tags/?page_size=1" | jq -r '.results[0].name')
+          echo "LATEST_TAG: $LATEST_TAG" #打印测试
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
       - name: Deploy to Aliyun
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          ALIYUN_USER: ${{ secrets.ALIYUN_USER }}
-          ALIYUN_IP: ${{ secrets.ALIYUN_IP }}
-          IMAGE_TAG: ${{ steps.get_tag.outputs.tag }}
         run: |
           echo "Starting deployment..."
-
-          # 登录Docker
-          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-
-          # 拉取最新的Docker镜像
-          docker pull yupengli0106/myapp:${{ env.IMAGE_TAG }}
-
           # SSH到服务器并部署
-          ssh $ALIYUN_USER@$ALIYUN_SERVER << 'ENDSSH'
+          ssh ${{ secrets.ALIYUN_USER }}@${{ secrets.ALIYUN_IP }} << 'ENDSSH'
+          # 从 docker hub 拉取最新的镜像到阿里云server
+          docker pull yupengli0106/myapp:${LATEST_TAG}
+          #运行上一步的镜像
+          docker run -d --name my_app_container -p 80:80 yupengli0106/myapp:${LATEST_TAG}
+          #测试完成后停止和删除容器以便下次连续部署
           docker stop my_app_container || true
           docker rm my_app_container || true
-          docker run -d --name my_app_container -p 80:80 yupengli0106/myapp:${{ env.IMAGE_TAG }}
           ENDSSH
-
           echo "Deployment finished."
