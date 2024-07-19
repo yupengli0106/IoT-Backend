@@ -1,6 +1,7 @@
-package com.demo.myapp.utils;
+package com.demo.myapp.filter;
 
 import com.demo.myapp.pojo.LoginUser;
+import com.demo.myapp.utils.JwtUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -44,16 +45,19 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         // check if the token is valid
         if (!JwtUtil.isValidToken(token)){
             SecurityContextHolder.clearContext();
-            throw new RuntimeException("invalid token");
+            // 401 Unauthorized
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{\"message\": \"Invalid token\"}");
+            return;
         }
 
         // check if the user is logged in
         LoginUser loginUser = (LoginUser) redisTemplate.opsForValue().get(token);
         if (loginUser == null) {
             SecurityContextHolder.clearContext();
-            throw new RuntimeException("user not logged in");
-//            filterChain.doFilter(request, response);
-//            return;
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{\"message\": \"User not logged in\"}");
+            return;
         }
 
         // pass all the authentication checks, current user is logged in, then store the user in the security context
