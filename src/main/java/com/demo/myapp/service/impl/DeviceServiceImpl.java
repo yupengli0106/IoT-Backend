@@ -1,5 +1,6 @@
 package com.demo.myapp.service.impl;
 
+import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.mapper.DeviceMapper;
 import com.demo.myapp.pojo.Device;
 import com.demo.myapp.pojo.LoginUser;
@@ -9,8 +10,10 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -27,6 +30,9 @@ public class DeviceServiceImpl implements DeviceService {
     @Resource
     private MqttService mqttService;
 
+    @Resource
+    private UserService userService;
+
     @Override
     public List<Device> getAllDevices() {
         return deviceMapper.findAllDevices();
@@ -38,22 +44,61 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    public void addDevice(Device device) {
-        deviceMapper.insertDevice(device);
+    @Transactional
+    public ResponseEntity<Result> addDevice(Device device) {
+        // 检查设备名称是否重复
+        if (deviceMapper.findDeviceByName(device.getName()) != null) {
+            return ResponseEntity.badRequest().body(Result.error(405, "Device name already exists"));
+        }
+        // 获取当前登录用户的ID
+        Long userId = userService.getCurrentUserId();
+        device.setUserId(userId);
+        device.setStatus("off"); // set default status
+        device.setName(device.getName());
+
+        // 插入设备记录到数据库
+        try {
+            deviceMapper.insertDevice(device);
+            return ResponseEntity.ok(Result.success("Device added successfully"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Result.error(405, "Error adding device"));
+        }
     }
 
     @Override
-    public void updateDevice(Long id, Device device) {
+    @Transactional
+    public ResponseEntity<Result> updateDevice(Long id, Device device) {
+        if (deviceMapper.findDeviceByName(device.getName()) != null) {
+            return ResponseEntity.badRequest().body(Result.error(405, "Device name already exists"));
+        }
+        device.setUserId(userService.getCurrentUserId());
         device.setId(id);
-        deviceMapper.updateDevice(device);
+        device.setType(device.getType());
+        device.setName(device.getName());
+
+        try {
+            deviceMapper.updateDevice(device);
+            return ResponseEntity.ok(Result.success("Device updated successfully"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Result.error(405, "Error updating device"));
+        }
     }
 
     @Override
+    @Transactional
     public void deleteDevice(Long id) {
-        deviceMapper.deleteDeviceById(id);
+        Long userId = userService.getCurrentUserId();
+        try {
+            deviceMapper.deleteDeviceById(id, userId);
+        } catch (Exception e) {
+            throw new RuntimeException("Error deleting device",e);
+        }
     }
 
     @Override
+    @Transactional
     public void controlDevice(Long id, String command) {
         Device device = deviceMapper.findDeviceById(id);
         if (device != null) {

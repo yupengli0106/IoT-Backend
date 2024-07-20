@@ -1,5 +1,6 @@
 package com.demo.myapp.controller;
 
+import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.Device;
 import com.demo.myapp.service.DeviceService;
 import jakarta.annotation.Resource;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -39,13 +41,13 @@ public class DeviceController {
     }
 
     @PostMapping("/add")
-    public void addDevice(@RequestBody Device device) {
-        deviceService.addDevice(device);
+    public ResponseEntity<Result> addDevice(@RequestBody Device device) {
+        return deviceService.addDevice(device);
     }
 
     @PutMapping("/{id}")
-    public void updateDevice(@PathVariable Long id, @RequestBody Device device) {
-        deviceService.updateDevice(id, device);
+    public ResponseEntity<Result> updateDevice(@PathVariable Long id, @RequestBody Device device) {
+        return deviceService.updateDevice(id, device);
     }
 
     @DeleteMapping("/{id}")

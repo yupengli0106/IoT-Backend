@@ -1,8 +1,10 @@
 package com.demo.myapp.service;
 
+import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.Device;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -14,8 +16,8 @@ import java.util.List;
 public interface DeviceService {
     List<Device> getAllDevices();
     Device getDeviceById(Long id);
-    void addDevice(Device device);
-    void updateDevice(Long id, Device device);
+    ResponseEntity<Result> addDevice(Device device);
+    ResponseEntity<Result> updateDevice(Long id, Device device);
     void deleteDevice(Long id);
     void controlDevice(Long id, String command);
     Page<Device> getDevicesByPage(Pageable pageable);

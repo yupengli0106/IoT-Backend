@@ -2,7 +2,6 @@ package com.demo.myapp.mapper;
 
 import com.demo.myapp.pojo.Device;
 import org.apache.ibatis.annotations.*;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -19,19 +18,22 @@ public interface DeviceMapper {
     @Select("SELECT * FROM devices WHERE id = #{id}")
     Device findDeviceById(Long id);
 
-    @Insert("INSERT INTO devices (name, type, status) VALUES (#{name}, #{type}, #{status})")
+    @Insert("INSERT INTO devices (name, type, status, user_id) VALUES (#{name}, #{type}, #{status}, #{userId})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insertDevice(Device device);
 
-    @Update("UPDATE devices SET name = #{name}, type = #{type}, status = #{status} WHERE id = #{id}")
+    @Update("UPDATE devices SET name = #{name}, type = #{type} WHERE id = #{id} AND user_id = #{userId}")
     void updateDevice(Device device);
 
-    @Delete("DELETE FROM devices WHERE id = #{id}")
-    void deleteDeviceById(Long id);
+    @Delete("DELETE FROM devices WHERE id = #{id} AND user_id = #{userId}")
+    void deleteDeviceById(Long id, Long userId);
 
     @Select("SELECT * FROM devices WHERE user_id = #{userId} LIMIT #{pageSize} OFFSET #{offset}")
     List<Device> findDevicesByPage(@Param("userId") Long userId, @Param("pageSize") int pageSize, @Param("offset") int offset);
 
     @Select("SELECT COUNT(*) FROM devices WHERE user_id = #{userId}")
     long countDevices(@Param("userId") Long userId);
+
+    @Select("SELECT * FROM devices WHERE name = #{name} AND user_id = #{userId}")
+    Device findDeviceByName(String name);
 }
