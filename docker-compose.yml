@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  Backend:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
@@ -9,53 +9,30 @@ services:
       - MySQL
       - Redis
       - Eclipse-mosquitto
-    environment:
-      - Aliyun_IP_FILE=/run/secrets/Aliyun_IP
-      - Redis_Password_FILE=/run/secrets/Redis_Password
-      - Database_User_FILE=/run/secrets/Database_User
-      - Database_Password_FILE=/run/secrets/Database_Password
-      - Mosquitto_Username_FILE=/run/secrets/Mosquitto_Username
-      - Mosquitto_Password_FILE=/run/secrets/Mosquitto_Password
-      - Gmail_Username_FILE=/run/secrets/Gmail_Username
-      - Gmail_App_Password_FILE=/run/secrets/Gmail_App_Password
-    secrets:
-      - Aliyun_IP
-      - Redis_Password
-      - Database_User
-      - Database_Password
-      - Mosquitto_Username
-      - Mosquitto_Password
-      - Gmail_Username
-      - Gmail_App_Password
+    env_file: # TODO: 目前先使用.env文件，后续要使用Docker secrets！
+      - .env
     ports:
       - "8080:8080"
 
   MySQL:
     image: mysql:latest
     environment:
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/Database_Password
-    secrets:
-      - Database_Password
+      - MYSQL_ROOT_PASSWORD=${Database_Password}
     ports:
       - "3306:3306"
 
   Redis:
     image: redis:latest
     environment:
-      REDIS_PASSWORD_FILE: /run/secrets/Redis_Password
-    secrets:
-      - Redis_Password
+      - REDIS_PASSWORD=${Redis_Password}
     ports:
       - "6379:6379"
 
   Eclipse-mosquitto:
     image: eclipse-mosquitto
     environment:
-      - MOSQUITTO_USERNAME_FILE=/run/secrets/Mosquitto_Username
-      - MOSQUITTO_PASSWORD_FILE=/run/secrets/Mosquitto_Password
-    secrets:
-      - Mosquitto_Username
-      - Mosquitto_Password
+      - MOSQUITTO_USERNAME=${Mqtt_Username}
+      - MOSQUITTO_PASSWORD=${Mqtt_Password}
     ports:
       - "1883:1883"
 
