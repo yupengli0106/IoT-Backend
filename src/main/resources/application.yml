@@ -42,6 +42,10 @@ spring:
             required: true
     port: 587
 
+# Server configuration for deployment
+server:
+  port: 8080
+  address: 0.0.0.0
 
 # MQTT
 mqtt:
