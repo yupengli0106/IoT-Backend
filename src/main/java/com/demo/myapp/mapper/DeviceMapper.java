@@ -35,5 +35,5 @@ public interface DeviceMapper {
     long countDevices(@Param("userId") Long userId);
 
     @Select("SELECT * FROM devices WHERE name = #{name} AND user_id = #{userId}")
-    Device findDeviceByName(String name);
+    Device findDeviceByName(String name, Long userId);
 }

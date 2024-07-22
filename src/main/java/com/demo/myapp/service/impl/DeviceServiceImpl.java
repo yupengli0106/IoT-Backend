@@ -46,16 +46,16 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     @Transactional
     public ResponseEntity<Result> addDevice(Device device) {
-        // 检查设备名称是否重复
-        if (deviceMapper.findDeviceByName(device.getName()) != null) {
-            return ResponseEntity.badRequest().body(Result.error(405, "Device name already exists"));
-        }
         // 获取当前登录用户的ID
         Long userId = userService.getCurrentUserId();
+        // 检查设备名称是否重复
+        if (deviceMapper.findDeviceByName(device.getName(),userId) != null) {
+            return ResponseEntity.badRequest().body(Result.error(405, "Device name already exists"));
+        }
+
         device.setUserId(userId);
         device.setStatus("off"); // set default status
         device.setName(device.getName());
-
         // 插入设备记录到数据库
         try {
             deviceMapper.insertDevice(device);
@@ -69,10 +69,12 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     @Transactional
     public ResponseEntity<Result> updateDevice(Long id, Device device) {
-        if (deviceMapper.findDeviceByName(device.getName()) != null) {
+        Long userId = userService.getCurrentUserId();
+        // 检查设备名称是否重复
+        if (deviceMapper.findDeviceByName(device.getName(), userId) != null) {
             return ResponseEntity.badRequest().body(Result.error(405, "Device name already exists"));
         }
-        device.setUserId(userService.getCurrentUserId());
+        device.setUserId(userId);
         device.setId(id);
         device.setType(device.getType());
         device.setName(device.getName());
