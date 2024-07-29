@@ -34,3 +34,9 @@ build/
 
 ### Environment ###
 *.env
+
+### mqtt ###
+/mqtt_persistence/
+
+### Logs ###
+/logs/
