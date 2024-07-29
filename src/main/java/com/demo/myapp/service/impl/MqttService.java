@@ -4,6 +4,8 @@ import jakarta.annotation.Resource;
 import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -17,6 +19,8 @@ public class MqttService {
 
     @Resource
     private IMqttClient mqttClient;
+
+    private static final Logger logger = LoggerFactory.getLogger(MqttService.class);
 
     /**
      * 发布消息
@@ -37,13 +41,31 @@ public class MqttService {
          */
         message.setQos(1);
         mqttClient.publish(topic, message);
+        logger.info("Published message to topic {}: {}", topic, payload);
     }
 
+    /**
+     * 订阅主题
+     * @param topic 主题
+     * @throws MqttException 异常
+     */
     public void subscribe(String topic) throws MqttException {
         mqttClient.subscribe(topic, (t, msg) -> {
             String payload = new String(msg.getPayload());
+            logger.info("Received message on topic {}: {}", t, payload);
             System.out.println("Received message: " + payload);
             // 处理接收到的消息
         });
+        logger.info("Subscribed to topic: {}", topic);
+    }
+
+    /**
+     * 取消订阅
+     * @param topic 主题
+     * @throws MqttException 异常
+     */
+    public void unsubscribe(String topic) throws MqttException {
+        mqttClient.unsubscribe(topic);
+        logger.info("Unsubscribed from topic: {}", topic);
     }
 }

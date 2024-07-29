@@ -22,7 +22,7 @@ public interface DeviceMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insertDevice(Device device);
 
-    @Update("UPDATE devices SET name = #{name}, type = #{type} WHERE id = #{id} AND user_id = #{userId}")
+    @Update("UPDATE devices SET name = #{name}, type = #{type}, status=#{status} WHERE id = #{id} AND user_id = #{userId}")
     void updateDevice(Device device);
 
     @Delete("DELETE FROM devices WHERE id = #{id} AND user_id = #{userId}")

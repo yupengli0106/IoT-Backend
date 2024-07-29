@@ -50,14 +50,14 @@ public class DeviceController {
         return deviceService.updateDevice(id, device);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteDevice(@PathVariable Long id) {
-        deviceService.deleteDevice(id);
+    @DeleteMapping("/delete")
+    public ResponseEntity<Result> deleteDevice(@RequestBody List<Long> ids) {
+        return deviceService.deleteDevice(ids);
     }
 
     @PostMapping("/{id}/control")
-    public void controlDevice(@PathVariable Long id, @RequestParam String command) {
-        deviceService.controlDevice(id, command);
+    public ResponseEntity<Result> controlDevice(@PathVariable Long id, @RequestParam String command) {
+        return deviceService.controlDevice(id, command);
     }
 
     @GetMapping("/page/{page}/size/{size}")

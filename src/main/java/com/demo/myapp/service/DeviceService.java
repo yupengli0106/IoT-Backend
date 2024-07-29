@@ -13,12 +13,12 @@ import java.util.List;
  * @Date: 11/7/2024 23:19
  * @Description:
  */
-public interface DeviceService {
+public interface  DeviceService {
     List<Device> getAllDevices();
     Device getDeviceById(Long id);
     ResponseEntity<Result> addDevice(Device device);
     ResponseEntity<Result> updateDevice(Long id, Device device);
-    void deleteDevice(Long id);
-    void controlDevice(Long id, String command);
+    ResponseEntity<Result> deleteDevice(List<Long> id);
+    ResponseEntity<Result> controlDevice(Long id, String command);
     Page<Device> getDevicesByPage(Pageable pageable);
 }

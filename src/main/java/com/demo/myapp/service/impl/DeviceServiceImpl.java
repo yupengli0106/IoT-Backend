@@ -56,9 +56,9 @@ public class DeviceServiceImpl implements DeviceService {
         device.setUserId(userId);
         device.setStatus("off"); // set default status
         device.setName(device.getName());
-        // 插入设备记录到数据库
-        try {
+        try { // 插入设备记录到数据库
             deviceMapper.insertDevice(device);
+            mqttService.subscribe("home/device/" + device.getId() + "/status");
             return ResponseEntity.ok(Result.success("Device added successfully"));
         } catch (Exception e) {
             e.printStackTrace();
@@ -78,8 +78,9 @@ public class DeviceServiceImpl implements DeviceService {
         device.setId(id);
         device.setType(device.getType());
         device.setName(device.getName());
+        device.setStatus(device.getStatus());
 
-        try {
+        try { // 更新设备记录到数据库
             deviceMapper.updateDevice(device);
             return ResponseEntity.ok(Result.success("Device updated successfully"));
         } catch (Exception e) {
@@ -90,30 +91,39 @@ public class DeviceServiceImpl implements DeviceService {
 
     @Override
     @Transactional
-    public void deleteDevice(Long id) {
+    public ResponseEntity<Result> deleteDevice(List<Long> ids) {
         Long userId = userService.getCurrentUserId();
         try {
-            deviceMapper.deleteDeviceById(id, userId);
+            for (Long id : ids) {
+                deviceMapper.deleteDeviceById(id, userId); // 删除设备
+                mqttService.unsubscribe("home/device/" + id + "/status"); // 取消订阅
+            }
+            return ResponseEntity.ok(Result.success("Device deleted successfully"));
         } catch (Exception e) {
-            throw new RuntimeException("Error deleting device",e);
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Result.error(405, "Error deleting device"));
         }
     }
 
     @Override
     @Transactional
-    public void controlDevice(Long id, String command) {
+    public ResponseEntity<Result> controlDevice(Long id, String command) {
+        Long userId = userService.getCurrentUserId();
         Device device = deviceMapper.findDeviceById(id);
         if (device != null) {
+            device.setUserId(userId);
             device.setStatus(command);
-            deviceMapper.updateDevice(device);
-            // 使用MQTT发送控制命令
-            try {
-                String topic = "home/" + device.getType() + "/" + id + "/control";
-                mqttService.publish(topic, command);
+            try { // 使用MQTT发送控制命令
+                String topic = "home/device/" + device.getId() + "/status";
+                mqttService.publish(topic, command);// 发布消息
+                deviceMapper.updateDevice(device);// 更新设备状态在数据库
+                return ResponseEntity.ok(Result.success("Device controlled successfully"));
             } catch (MqttException e) {
                 e.printStackTrace();
+                return ResponseEntity.badRequest().body(Result.error(405, "Error controlling device"));
             }
         }
+        return ResponseEntity.badRequest().body(Result.error(405, "Device not found"));
     }
 
     @Override
