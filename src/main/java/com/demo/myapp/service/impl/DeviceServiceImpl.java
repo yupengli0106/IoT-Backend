@@ -54,7 +54,7 @@ public class DeviceServiceImpl implements DeviceService {
         }
 
         device.setUserId(userId);
-        device.setStatus("off"); // set default status
+        device.setStatus("OFF"); // set default status
         device.setName(device.getName());
         try { // 插入设备记录到数据库
             deviceMapper.insertDevice(device);

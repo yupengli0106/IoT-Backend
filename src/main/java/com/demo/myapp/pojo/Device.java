@@ -8,6 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
+
 /**
  * @Author: Yupeng Li
  * @Date: 11/7/2024 23:02
@@ -25,5 +28,5 @@ public class Device {
     private String type;
     private String status;
     private Long userId;
-
+    private Timestamp updateTime; //mysql会自动更新不需要设置，这里只是要返回给前端这个字段
 }
