@@ -58,7 +58,17 @@ public class DeviceServiceImpl implements DeviceService {
         device.setName(device.getName());
         try { // 插入设备记录到数据库
             deviceMapper.insertDevice(device);
-            mqttService.subscribe("home/device/" + device.getId() + "/status");
+
+
+            //TODO: 这里需要配合一个写死的模拟器来使用，后续可以改进
+
+            // 添加设备时发布设备初始状态，以保持一致性
+            String statusTopic = "home/device/" + device.getId() + "/status";
+            mqttService.publish(statusTopic, "{\"status\": \"OFF\"}");
+
+            // 订阅设备端的publish主题，可以接收到设备端传过来的数据
+            mqttService.subscribe("home/device/" + device.getId() + "/data");
+
             return ResponseEntity.ok(Result.success("Device added successfully"));
         } catch (Exception e) {
             e.printStackTrace();

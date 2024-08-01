@@ -55,6 +55,7 @@ public class MqttService {
             logger.info("Received message on topic {}: {}", t, payload);
             System.out.println("Received message: " + payload);
             // 处理接收到的消息
+            handleIncomingData(payload);
         });
         logger.info("Subscribed to topic: {}", topic);
     }
@@ -67,5 +68,15 @@ public class MqttService {
     public void unsubscribe(String topic) throws MqttException {
         mqttClient.unsubscribe(topic);
         logger.info("Unsubscribed from topic: {}", topic);
+    }
+
+    /**
+     * 处理接收到的设备数据
+     * @param data 数据内容
+     */
+    private void handleIncomingData(String data) {
+        // 在这里处理从设备接收到的数据
+        System.out.println("Processed data: " + data);
+        // 可以将数据存储到数据库、更新UI、或触发其他操作
     }
 }
