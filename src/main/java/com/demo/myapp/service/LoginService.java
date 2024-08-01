@@ -28,5 +28,12 @@ public interface LoginService {
      * @param code the code from the user
      * @return the result of the verification, if the code is correct, insert the user into the database, otherwise return the error message
      */
-    ResponseEntity<Result> verifyCode(String email, String code);
+    ResponseEntity<Result> verifyCode(String email, String code, String action);
+
+    ResponseEntity<Result> updateProfile(User user);
+
+    ResponseEntity<Result> resetPassword(User user);
+
+    ResponseEntity<Result> changePassword(User user);
+
 }

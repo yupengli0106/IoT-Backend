@@ -81,6 +81,7 @@ public class DeviceServiceImpl implements DeviceService {
         device.setStatus(device.getStatus());
 
         try { // 更新设备记录到数据库
+            // TODO: edit device时候status的处理
             deviceMapper.updateDevice(device);
             return ResponseEntity.ok(Result.success("Device updated successfully"));
         } catch (Exception e) {

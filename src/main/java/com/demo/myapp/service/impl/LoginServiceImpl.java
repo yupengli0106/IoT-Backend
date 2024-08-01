@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @Author: Yupeng Li
  * @Date: 1/7/2024 15:34
- * @Description:
+ * @Description: LoginService implementation including login, register, logout, verifyCode, updateProfile, resetPassword, changePassword
  */
 @Service
 public class LoginServiceImpl implements LoginService {
@@ -42,6 +42,8 @@ public class LoginServiceImpl implements LoginService {
     RedisTemplate<String, Object> redisTemplate;
     @Resource
     EmailService emailService;
+    @Resource
+    UserService userService;
 
     @Override
     public ResponseEntity<Result> login(User user) {
@@ -64,6 +66,7 @@ public class LoginServiceImpl implements LoginService {
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
             response.put("roles", loginUser.getRoles());
+            response.put("email", loginUser.getUser().getEmail());
 
             return ResponseEntity.ok(Result.success(response));
         }else {
@@ -74,35 +77,19 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public ResponseEntity<Result> register(User user) {
-        String username = user.getUsername().trim();
-        // TODO: 后续可以改进，比如密码长度限制
-        String password = user.getPassword().trim();
-        String email = user.getEmail().trim();
+        String username = removeSpacesByRegex(user.getUsername());
+        String email = removeSpacesByRegex(user.getEmail());
         // Check if the username already exists
         String dbUsername = userMapper.getUsernameByUsername(username);
         // Check if the email already exists
         String dbEmail = userMapper.getEmailByEmail(email);
-
 
         if (dbUsername != null && dbUsername.equals(username)) {
             return ResponseEntity.status(409).body(Result.error(409,"Username already exists"));
         } else if (dbEmail != null && email.equals(dbEmail)) {
             return ResponseEntity.status(409).body(Result.error(409,"Email already exists"));
         } else {
-            // verify the email by sending a verification code
-            String code = null;
-            try {
-                code = emailService.sendVerificationCode(email);
-            } catch (Exception e) {
-                // TODO: log the exception
-                return ResponseEntity.status(500).body(Result.error(500, "Failed to send verification code"));
-            }
-            // 临时存储验证码
-            redisTemplate.opsForValue().set(email, code, 3, TimeUnit.MINUTES);
-            // 临时存储用户信息
-            redisTemplate.opsForValue().set("temp_user:" + email, user, 4, TimeUnit.MINUTES);
-
-            return ResponseEntity.ok(Result.success("Verification code sent to your email"));
+            return storeCodeInRedis(user, "register");
         }
     }
 
@@ -128,39 +115,124 @@ public class LoginServiceImpl implements LoginService {
         return ResponseEntity.ok(Result.success("Logout successfully"));
     }
 
+    /**
+     * public method to remove all spaces from a string
+     * @param string the string to remove spaces from
+     * @return the string without spaces
+     */
+    private String removeSpacesByRegex(String string) {
+        return string.replaceAll("\\s", "");
+    }
+
+    /**
+     * public method to store the code in Redis
+     * @param user the temp user to store in Redis
+     * @param action the action to store in Redis
+     * @return the response entity
+     */
+    private ResponseEntity<Result> storeCodeInRedis(User user, String action) {
+        // verify the email by sending a verification code
+        String email = removeSpacesByRegex(user.getEmail());
+        String code;
+        try {
+            code = removeSpacesByRegex(emailService.sendVerificationCode(email));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Result.error(500, "Failed to send verification code"));
+        }
+        // 临时存储验证码
+        redisTemplate.opsForValue().set(email, code, 3, TimeUnit.MINUTES);
+        // 临时存储用户信息
+        redisTemplate.opsForValue().set("temp_user:" + email + ":" + action, user, 4, TimeUnit.MINUTES);
+
+        return ResponseEntity.ok(Result.success("Verification code sent to your email"));
+    }
+
     @Override
     @Transactional
-    public ResponseEntity<Result> verifyCode(String email, String code) {
-        // 去除前后空格
-        email = email.trim();
-        code = code.trim();
+    public ResponseEntity<Result> verifyCode(String email, String code, String action) {
+        // 去除所有空格
+        email = removeSpacesByRegex(email);
+        code = removeSpacesByRegex(code);
         String storedCode = (String) redisTemplate.opsForValue().get(email);
         if (storedCode != null && storedCode.equals(code)) {
-            // 验证成功，完成注册流程
-            User tempUser = (User) redisTemplate.opsForValue().get("temp_user:" + email);
+            // 验证成功，根据不同的action执行不同的操作
+            User tempUser = (User) redisTemplate.opsForValue().get("temp_user:" + email + ":" + action);
             if (tempUser != null) {
-                tempUser.setPassword(bCryptPasswordEncoder.encode(tempUser.getPassword()));
-                userMapper.insertUser(tempUser);
-
-                // assign the user with default role(‘ROLE_USER’) and permission(‘READ_PRIVILEGE’) after registration
-                Long userId = tempUser.getId();
-                /*
-                * 这里设置了默认的角色为‘ROLE_USER’，同时会根据‘ROLE_USER’这个角色给用户分配一个默认的权限，这个权限是在数据库中的，不是在代码中写死的
-                */
-                Long roleId = roleMapper.getRoleIdByRoleName("ROLE_USER");
-                roleMapper.insertUserRole(userId, roleId);
-
-                // 清除临时数据
-                redisTemplate.delete(email);
-                redisTemplate.delete("temp_user:" + email);
-
-                return ResponseEntity.ok(Result.success("Registration successful"));
+                return switch (action) {
+                    case "register" -> completeRegistration(tempUser);
+                    case "updateProfile" -> completeProfileUpdate(tempUser);
+                    //告诉前端邮箱验证成功，重定向到修改密码的页面
+                    case "resetPassword" -> ResponseEntity.status(202).body(Result.success("Verification successful"));
+                    default -> ResponseEntity.status(400).body(Result.error(400, "Invalid action"));
+                };
             } else {
                 return ResponseEntity.status(400).body(Result.error(400, "Temporary user data not found"));
             }
         } else {
             return ResponseEntity.status(400).body(Result.error(400, "Invalid verification code"));
         }
+    }
+
+    protected ResponseEntity<Result> completeProfileUpdate(User user) {
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        userMapper.updateUser(user);
+        redisTemplate.delete(user.getEmail());
+        redisTemplate.delete("temp_user:" + user.getEmail() + ":updateProfile");
+
+        return ResponseEntity.ok(Result.success("Profile updated successfully"));
+    }
+
+    protected ResponseEntity<Result> completeRegistration(User user) {
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        userMapper.insertUser(user);
+        Long userId = user.getId();
+        //这里设置了默认的角色为‘ROLE_USER’，同时会根据‘ROLE_USER’这个角色给用户分配一个默认的权限，这个权限是在数据库中的，不是在代码中写死的
+        Long roleId = roleMapper.getRoleIdByRoleName("ROLE_USER");
+        roleMapper.insertUserRole(userId, roleId);
+
+        redisTemplate.delete(user.getEmail());
+        redisTemplate.delete("temp_user:" + user.getEmail() + ":register");
+
+        return ResponseEntity.ok(Result.success("Registration successful"));
+    }
+
+    @Override
+    public ResponseEntity<Result> updateProfile(User user) {
+        // TODO: 如果修改了密码，需要删除redis中的token。仅仅修改了其他信息，不需要删除token，不需要重新登录！
+        if (user == null || user.getEmail() == null) {
+            return ResponseEntity.status(400).body(Result.error(400, "Email or other fields are empty"));
+        }
+        //!这里需要先获取当前登录用户的ID，然后再进行下一步更新用户信息。
+        //!如果到下一步 completeProfileUpdate 再去获取当前登录用户的ID，可能会出现用户未认证的情况
+        Long userId = userService.getCurrentUserId();
+        user.setId(userId);
+        return storeCodeInRedis(user, "updateProfile");
+    }
+
+    @Override
+    public ResponseEntity<Result> resetPassword(User user) {
+        if (user == null || user.getEmail() == null) {
+            return ResponseEntity.status(400).body(Result.error(400, "Email or other fields are empty"));
+        }else if (userMapper.getEmailByEmail(removeSpacesByRegex(user.getEmail())) == null) {
+            return ResponseEntity.status(400).body(Result.error(400, "Email does not exist"));
+        }
+        return storeCodeInRedis(user, "resetPassword");
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<Result> changePassword(User user) {
+        if (user == null || user.getEmail() == null || user.getPassword() == null) {
+            return ResponseEntity.status(400).body(Result.error(400, "Email or password is empty"));
+        }
+        //TODO: 是否可以删除redis中的token？
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        //!这里是根据email去修改密码的，在上一步的resetPassword方法中已经将email存入了user对象中
+        userMapper.changePassword(user);
+        redisTemplate.delete(user.getEmail());
+        redisTemplate.delete("temp_user:" + user.getEmail() + ":resetPassword");
+
+        return ResponseEntity.ok(Result.success("Password reset successfully"));
     }
 
 

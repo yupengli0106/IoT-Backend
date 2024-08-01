@@ -38,24 +38,12 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable) // disable csrf
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login","/register","/verify-code").permitAll()// permit request without authentication
+                        .requestMatchers("/login","/register","/verify-code","/forgot-password","/change-password").permitAll()// permit request without authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout(AbstractHttpConfigurer::disable);// disable logout otherwise it will conflict with our custom logout
 
-//                .formLogin(formLogin -> formLogin
-//                        .loginPage("/login")
-//                        .loginProcessingUrl("/login")
-//                        .defaultSuccessUrl("/home")
-//                        .failureUrl("/login?error=true")
-//                        .permitAll()
-//                )
-//                .logout(logout -> logout
-//                        .logoutUrl("/logout")
-//                        .logoutSuccessUrl("/login")
-//                        .permitAll()
-//                );
         return http.build();
     }
 

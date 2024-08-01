@@ -35,14 +35,29 @@ public class LoginController {
     }
 
     @PostMapping("/verify-code")
-    public ResponseEntity<Result> verifyCode(@RequestParam String email, @RequestParam String code) {
-        return loginService.verifyCode(email, code);
+    public ResponseEntity<Result> verifyCode(@RequestParam String email, @RequestParam String code, @RequestParam String action) {
+        return loginService.verifyCode(email, code, action);
     }
 
     @GetMapping("/home")
     @PreAuthorize("hasAnyAuthority('DELETE_PRIVILEGE')")
     public String home() {
         return "Welcome to the home page!";
+    }
+
+    @PostMapping("/profile")
+    public ResponseEntity<Result> profile(@RequestBody User user) {
+        return loginService.updateProfile(user);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Result> resetPassword(@RequestBody User user) {
+        return loginService.resetPassword(user);
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Result> changePassword(@RequestBody User user) {
+        return loginService.changePassword(user);
     }
 
 }
