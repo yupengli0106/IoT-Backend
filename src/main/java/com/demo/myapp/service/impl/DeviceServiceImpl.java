@@ -5,6 +5,7 @@ import com.demo.myapp.mapper.DeviceMapper;
 import com.demo.myapp.pojo.Device;
 import com.demo.myapp.pojo.LoginUser;
 import com.demo.myapp.service.DeviceService;
+import com.demo.myapp.service.UserActivityService;
 import jakarta.annotation.Resource;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.data.domain.Page;
@@ -15,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -32,6 +35,9 @@ public class DeviceServiceImpl implements DeviceService {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private UserActivityService userActivityService;
 
     @Override
     public List<Device> getAllDevices() {
@@ -58,6 +64,14 @@ public class DeviceServiceImpl implements DeviceService {
         device.setName(device.getName());
         try { // 插入设备记录到数据库
             deviceMapper.insertDevice(device);
+
+            //记录用户操作
+            userActivityService.logUserActivity(
+                    userId,
+                    userService.getCurrentUsername(),
+                    device.getName(),
+                    "Add device by user '" + userService.getCurrentUsername() + "', default status is 'OFF', at time " + LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            );
 
 
             //TODO: 这里需要配合一个写死的模拟器来使用，后续可以改进
@@ -92,6 +106,18 @@ public class DeviceServiceImpl implements DeviceService {
 
         try { // 更新设备记录到数据库
             deviceMapper.editDevice(device);
+            //记录用户操作
+            userActivityService.logUserActivity(
+                    userId,
+                    userService.getCurrentUsername(),
+                    device.getName(),
+                    "Update device by user '" +
+                            userService.getCurrentUsername()
+                            + "', device name is '" + device.getName()
+                            + "', device type is '" + device.getType()
+                            + "' at time " + LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            );
+
             return ResponseEntity.ok(Result.success("Device updated successfully"));
         } catch (Exception e) {
             e.printStackTrace();
@@ -106,6 +132,17 @@ public class DeviceServiceImpl implements DeviceService {
         try {
             for (Long id : ids) {
                 deviceMapper.deleteDeviceById(id, userId); // 删除设备
+                //记录用户操作
+                userActivityService.logUserActivity(
+                        userId,
+                        userService.getCurrentUsername(),
+                        id.toString(),
+                        "Delete device by user '" +
+                                userService.getCurrentUsername() +
+                                "', device id is '" + id +
+                                "', at time " +
+                                LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                );
                 mqttService.unsubscribe("home/device/" + id + "/status"); // 取消订阅
             }
             return ResponseEntity.ok(Result.success("Device deleted successfully"));
@@ -128,6 +165,17 @@ public class DeviceServiceImpl implements DeviceService {
                 String topic = "home/device/" + device.getId() + "/status";
                 mqttService.publish(topic, command);// 发布消息
                 deviceMapper.updateDeviceStatus(device); // 更新设备状态在数据库
+                //记录用户操作
+                userActivityService.logUserActivity(
+                        userId,
+                        userService.getCurrentUsername(),
+                        device.getName(),
+                        "Controlled device by user '" +
+                                userService.getCurrentUsername() +
+                                "', device name is '" + device.getName() +
+                                "', command is '" + command +
+                                "', at time " + LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                );
                 return ResponseEntity.ok(Result.success("Device controlled successfully"));
             } catch (MqttException e) {
                 e.printStackTrace();

@@ -25,5 +25,9 @@ public class UserService {
     public Long getCurrentUserId() {
         return getCurrentUser().getUser().getId();
     }
+
+    public String getCurrentUsername() {
+        return getCurrentUser().getUser().getUsername();
+    }
 }
 

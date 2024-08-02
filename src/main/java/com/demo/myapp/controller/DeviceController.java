@@ -2,7 +2,9 @@ package com.demo.myapp.controller;
 
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.Device;
+import com.demo.myapp.pojo.UserActivity;
 import com.demo.myapp.service.DeviceService;
+import com.demo.myapp.service.UserActivityService;
 import jakarta.annotation.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +31,8 @@ public class DeviceController {
     private DeviceService deviceService;
     @Resource
     private PagedResourcesAssembler<Device> pagedResourcesAssembler; // 分页资源装配器
+    @Resource
+    private UserActivityService userActivityService;
 
     @GetMapping("/get_all")
     public List<Device> getAllDevices() {
@@ -62,6 +66,7 @@ public class DeviceController {
 
     @GetMapping("/page/{page}/size/{size}")
     public PagedModel<EntityModel<Device>> getDevicesByPage(@PathVariable int page, @PathVariable int size) {
+        // TODO: need to check the page and size: Page index must not be less than zero (error)
         Pageable pageable = PageRequest.of(page, size);
         Page<Device> devicePage = deviceService.getDevicesByPage(pageable);
         return pagedResourcesAssembler.toModel(devicePage);
@@ -80,6 +85,11 @@ public class DeviceController {
     @GetMapping("/offline")
     public long getOfflineDevices() {
         return deviceService.getOfflineDevices();
+    }
+
+    @GetMapping("/recent-activities")
+    public List<UserActivity> getUserActivities() {
+        return userActivityService.getUserActivities();
     }
 }
 
