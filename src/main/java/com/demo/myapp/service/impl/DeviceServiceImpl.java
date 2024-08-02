@@ -92,7 +92,7 @@ public class DeviceServiceImpl implements DeviceService {
 
         try { // 更新设备记录到数据库
             // TODO: edit device时候status的处理
-            deviceMapper.updateDevice(device);
+            deviceMapper.editDevice(device);
             return ResponseEntity.ok(Result.success("Device updated successfully"));
         } catch (Exception e) {
             e.printStackTrace();
@@ -127,7 +127,7 @@ public class DeviceServiceImpl implements DeviceService {
             try { // 使用MQTT发送控制命令
                 String topic = "home/device/" + device.getId() + "/status";
                 mqttService.publish(topic, command);// 发布消息
-                deviceMapper.updateDevice(device);// 更新设备状态在数据库
+                deviceMapper.updateDeviceStatus(device); // 更新设备状态在数据库
                 return ResponseEntity.ok(Result.success("Device controlled successfully"));
             } catch (MqttException e) {
                 e.printStackTrace();

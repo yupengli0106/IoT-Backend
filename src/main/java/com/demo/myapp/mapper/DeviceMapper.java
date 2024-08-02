@@ -22,8 +22,8 @@ public interface DeviceMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insertDevice(Device device);
 
-    @Update("UPDATE devices SET name = #{name}, type = #{type}, status=#{status} WHERE id = #{id} AND user_id = #{userId}")
-    void updateDevice(Device device);
+    @Update("UPDATE devices SET name = #{name}, type = #{type} WHERE id = #{id} AND user_id = #{userId}")
+    void editDevice(Device device);
 
     @Delete("DELETE FROM devices WHERE id = #{id} AND user_id = #{userId}")
     void deleteDeviceById(Long id, Long userId);
@@ -36,4 +36,7 @@ public interface DeviceMapper {
 
     @Select("SELECT * FROM devices WHERE name = #{name} AND user_id = #{userId}")
     Device findDeviceByName(String name, Long userId);
+
+    @Update("UPDATE devices SET status = #{status} WHERE id = #{id} AND user_id = #{userId}")
+    void updateDeviceStatus(Device device);
 }
