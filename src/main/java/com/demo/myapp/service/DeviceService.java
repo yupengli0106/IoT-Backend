@@ -21,4 +21,10 @@ public interface  DeviceService {
     ResponseEntity<Result> deleteDevice(List<Long> id);
     ResponseEntity<Result> controlDevice(Long id, String command);
     Page<Device> getDevicesByPage(Pageable pageable);
+
+    long countDevices();
+
+    long getOnlineDevices();
+
+    long getOfflineDevices();
 }

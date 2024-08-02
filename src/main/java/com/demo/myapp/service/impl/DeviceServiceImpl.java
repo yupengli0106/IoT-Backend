@@ -91,7 +91,6 @@ public class DeviceServiceImpl implements DeviceService {
         device.setStatus(device.getStatus());
 
         try { // 更新设备记录到数据库
-            // TODO: edit device时候status的处理
             deviceMapper.editDevice(device);
             return ResponseEntity.ok(Result.success("Device updated successfully"));
         } catch (Exception e) {
@@ -119,6 +118,7 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     @Transactional
     public ResponseEntity<Result> controlDevice(Long id, String command) {
+        command = command.toUpperCase(); // 转换为大写
         Long userId = userService.getCurrentUserId();
         Device device = deviceMapper.findDeviceById(id);
         if (device != null) {
@@ -151,5 +151,20 @@ public class DeviceServiceImpl implements DeviceService {
         }
         List<Device> devices = deviceMapper.findDevicesByPage(currentUserId,pageSize, offset);
         return new PageImpl<>(devices, pageable, totalDevices);
+    }
+
+    @Override
+    public long countDevices() {
+        return deviceMapper.countDevices(userService.getCurrentUserId());
+    }
+
+    @Override
+    public long getOnlineDevices() {
+        return deviceMapper.countOnlineDevices(userService.getCurrentUserId());
+    }
+
+    @Override
+    public long getOfflineDevices() {
+        return deviceMapper.countOfflineDevices(userService.getCurrentUserId());
     }
 }

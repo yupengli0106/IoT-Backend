@@ -39,4 +39,10 @@ public interface DeviceMapper {
 
     @Update("UPDATE devices SET status = #{status} WHERE id = #{id} AND user_id = #{userId}")
     void updateDeviceStatus(Device device);
+
+    @Select("SELECT COUNT(*) FROM devices WHERE UPPER(status) = 'ON' AND user_id = #{userId}")
+    long countOnlineDevices(@Param("userId") Long currentUserId);
+
+    @Select("SELECT COUNT(*) FROM devices WHERE UPPER(status) = 'OFF' AND user_id = #{userId}")
+    long countOfflineDevices(@Param("userId") Long currentUserId);
 }

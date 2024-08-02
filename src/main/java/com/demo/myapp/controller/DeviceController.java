@@ -66,5 +66,20 @@ public class DeviceController {
         Page<Device> devicePage = deviceService.getDevicesByPage(pageable);
         return pagedResourcesAssembler.toModel(devicePage);
     }
+
+    @GetMapping("/count")
+    public long countDevices() {
+        return deviceService.countDevices();
+    }
+
+    @GetMapping("/online")
+    public long getOnlineDevices() {
+        return deviceService.getOnlineDevices();
+    }
+
+    @GetMapping("/offline")
+    public long getOfflineDevices() {
+        return deviceService.getOfflineDevices();
+    }
 }
 
