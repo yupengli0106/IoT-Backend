@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.demo.myapp.mapper.UserActivityMapper">
+
+    <!-- 删除超出限制的旧记录 -->
+
+<!--    这里先假定#{maxActivities}是 100，即每个用户最多只能有 100 条活动记录。-->
+<!--    删除多余记录：对于给定的 user_id，删除多于最新 100 条记录的活动记录。-->
+<!--    子查询选择：子查询通过 LIMIT 100 获取 user_id 对应的最新 100 条记录的 ID。-->
+<!--    外层查询删除：外层 DELETE 语句会删除 user_id 的所有记录中不在子查询结果集中的记录（即超出 100 条以外的旧记录）。-->
+
+    <delete id="deleteExcessActivities" parameterType="map">
+        DELETE FROM user_activities
+        WHERE user_id = #{userId}
+          AND id NOT IN (
+            SELECT id FROM (
+                               SELECT id FROM user_activities
+                               WHERE user_id = #{userId}
+                               ORDER BY update_time DESC
+                               LIMIT #{maxActivities}
+                           ) AS subquery_alias
+        )
+    </delete>
+
+</mapper>

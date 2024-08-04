@@ -4,6 +4,7 @@ import com.demo.myapp.pojo.UserActivity;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -20,4 +21,9 @@ public interface UserActivityMapper {
 
     @Insert("INSERT INTO user_activities (user_id, username, device_name, details) VALUES (#{userId}, #{username}, #{deviceName}, #{details})")
     void insertUserActivity(UserActivity userActivity);
+
+    @Select("SELECT DISTINCT user_id FROM user_activities")
+    List<Long> findAllUserIds();
+
+    void deleteExcessActivities(@Param("userId")  Long userId, @Param("maxActivities") int maxActivities);
 }

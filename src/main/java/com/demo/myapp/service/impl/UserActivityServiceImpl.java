@@ -3,6 +3,7 @@ package com.demo.myapp.service.impl;
 import com.demo.myapp.pojo.UserActivity;
 import com.demo.myapp.service.UserActivityService;
 import jakarta.annotation.Resource;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.demo.myapp.mapper.UserActivityMapper;
 
@@ -21,6 +22,29 @@ public class UserActivityServiceImpl implements UserActivityService {
     @Resource
     private UserService userService;
 
+    private final int MAX_ACTIVITIES = 100; // 每个用户最多保存100条活动记录
+    private final int FIXED_RATE = 1000 * 60 * 60 * 24 * 7; // 每7天清理一次
+
+
+    /**
+     * !定时任务，清理用户活动记录。
+     * !需要在配置类（或 MyAppApplication.class）上加上@EnableScheduling注解
+     */
+    @Scheduled(fixedRate = FIXED_RATE) // 每7天清理一次
+    public void cleanupUserActivities() {
+        try{
+            // 获取所有用户的ID
+            List<Long> userIds = userActivityMapper.findAllUserIds();
+            // 删除每个用户的多余活动记录
+            //TODO: 这里目前写死只能保存最近的100条记录，后期可以改进为根据用户设置的参数来保存
+            for (Long userId : userIds) {
+                userActivityMapper.deleteExcessActivities(userId, MAX_ACTIVITIES);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public List<UserActivity> getUserActivities() {
         Long userId = userService.getCurrentUserId();
@@ -34,7 +58,6 @@ public class UserActivityServiceImpl implements UserActivityService {
         userActivity.setUsername(username);
         userActivity.setDeviceName(deviceName);
         userActivity.setDetails(details);
-        //TODO: 后期改进限制数据库只能保存最近的100条记录
         userActivityMapper.insertUserActivity(userActivity);
     }
 }
