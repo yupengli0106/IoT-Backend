@@ -23,7 +23,7 @@ public interface UserMapper {
     @Select("select username from users where username = #{username}")
     String getUsernameByUsername(String username);
 
-    @Update("update users set username = #{username}, password = #{password}, email = #{email} where id=#{id}")
+    @Update("update users set username = #{username}, email = #{email} where id=#{id}")
     void updateUser(User user);
 
     @Update("update users set password = #{password} where email = #{email}")

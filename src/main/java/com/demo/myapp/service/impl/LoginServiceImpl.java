@@ -174,7 +174,6 @@ public class LoginServiceImpl implements LoginService {
     }
 
     protected ResponseEntity<Result> completeProfileUpdate(User user) {
-        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userMapper.updateUser(user);
         redisTemplate.delete(user.getEmail());
         redisTemplate.delete("temp_user:" + user.getEmail() + ":updateProfile");
@@ -206,7 +205,19 @@ public class LoginServiceImpl implements LoginService {
         //!如果到下一步 completeProfileUpdate 再去获取当前登录用户的ID，可能会出现用户未认证的情况
         Long userId = userService.getCurrentUserId();
         user.setId(userId);
-        return storeCodeInRedis(user, "updateProfile");
+
+        //如果修改了邮箱则需要验证邮箱验证码
+        if (!userService.getCurrentUserEmail().equals(user.getEmail())) {
+            //检查新邮箱是否已存在
+            if (userMapper.getEmailByEmail(removeSpacesByRegex(user.getEmail())) != null) {
+                return ResponseEntity.status(400).body(Result.error(400, "Email already exists"));
+            }
+            //验证邮箱
+            return storeCodeInRedis(user, "updateProfile");
+        } else {//如果没有修改邮箱，则直接更新用户信息
+            return completeProfileUpdate(user);
+        }
+
     }
 
     @Override

@@ -29,5 +29,9 @@ public class UserService {
     public String getCurrentUsername() {
         return getCurrentUser().getUser().getUsername();
     }
+
+    public String getCurrentUserEmail() {
+        return getCurrentUser().getUser().getEmail();
+    }
 }
 

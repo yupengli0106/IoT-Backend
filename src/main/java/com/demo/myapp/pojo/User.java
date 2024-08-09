@@ -29,6 +29,8 @@ public class User {
     private String email;
     private boolean enabled;
 
+
+    // TODO: could add more filed like age, address, phone number, etc.
     public User(String username, String password, String email) {
         this.username = username;
         this.password = password;
