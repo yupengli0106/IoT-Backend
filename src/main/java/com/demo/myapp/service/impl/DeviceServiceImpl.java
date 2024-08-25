@@ -77,7 +77,7 @@ public class DeviceServiceImpl implements DeviceService {
 
             // 添加设备时发布设备初始状态，以保持一致性
             String statusTopic = "home/device/" + device.getId() + "/status";
-            mqttService.publish(statusTopic, "{\"status\": \"OFF\"}");
+            mqttService.publish(statusTopic, "OFF");
 
             // 订阅设备端的publish主题，可以接收到设备端传过来的数据
             mqttService.subscribe("home/device/" + device.getId() + "/data");

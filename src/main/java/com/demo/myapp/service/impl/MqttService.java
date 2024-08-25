@@ -1,5 +1,6 @@
 package com.demo.myapp.service.impl;
 
+import com.demo.myapp.handler.WebSocketHandler;
 import jakarta.annotation.Resource;
 import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -19,6 +20,8 @@ public class MqttService {
 
     @Resource
     private IMqttClient mqttClient;
+    @Resource
+    private WebSocketHandler webSocketHandler;
 
     private static final Logger logger = LoggerFactory.getLogger(MqttService.class);
 
@@ -77,6 +80,8 @@ public class MqttService {
     private void handleIncomingData(String data) {
         // 在这里处理从设备接收到的数据
         System.out.println("Processed data: " + data);
+        // 通过 WebSocket 发送数据到客户端
+        webSocketHandler.sendMessageToClients(data);
         // 可以将数据存储到数据库、更新UI、或触发其他操作
     }
 }

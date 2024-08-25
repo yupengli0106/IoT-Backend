@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) // disable csrf
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login","/register","/verify-code","/forgot-password","/change-password").permitAll()// permit request without authentication
+                        .requestMatchers("/ws/**").permitAll()// permit websocket request without authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
