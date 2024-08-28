@@ -1,6 +1,8 @@
 package com.demo.myapp.service.impl;
 
 import com.demo.myapp.handler.WebSocketHandler;
+import com.demo.myapp.mapper.MqttSubscriptionMapper;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -20,10 +22,40 @@ public class MqttService {
 
     @Resource
     private IMqttClient mqttClient;
+
     @Resource
     private WebSocketHandler webSocketHandler;
 
+    @Resource
+    MqttSubscriptionMapper mqttSubscriptionMapper;
+
+    @Resource
+    private UserService userService;
+
     private static final Logger logger = LoggerFactory.getLogger(MqttService.class);
+
+
+    /**
+     * 这里是为了在服务端重启的时候，通过查询数据库，重新关注所有之前已经存在关注的topic
+     */
+    @PostConstruct
+    public void resubscribeAllTopics() {
+        try {
+            mqttSubscriptionMapper.findAllTopics()
+                    .forEach(topic -> {
+                        try {
+                            this.subscribe(topic);
+                        } catch (MqttException e) {
+                            e.printStackTrace();
+                            logger.error("Failed to subscribe to topic: {}", topic);
+                        }
+                    });
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("Failed to find topics throw mqttSubscriptionMapper", e);
+        }
+        logger.info("Resubscribed to all topics in database successfully!");
+    }
 
     /**
      * 发布消息

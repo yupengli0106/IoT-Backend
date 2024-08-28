@@ -2,8 +2,10 @@ package com.demo.myapp.service.impl;
 
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.mapper.DeviceMapper;
+import com.demo.myapp.mapper.MqttSubscriptionMapper;
 import com.demo.myapp.pojo.Device;
 import com.demo.myapp.pojo.LoginUser;
+import com.demo.myapp.pojo.MqttSubscription;
 import com.demo.myapp.service.DeviceService;
 import com.demo.myapp.service.UserActivityService;
 import jakarta.annotation.Resource;
@@ -37,6 +39,9 @@ public class DeviceServiceImpl implements DeviceService {
 
     @Resource
     private UserActivityService userActivityService;
+
+    @Resource
+    private MqttSubscriptionMapper mqttSubscriptionMapper;
 
     @Override
     public List<Device> getAllDevices() {
@@ -81,6 +86,12 @@ public class DeviceServiceImpl implements DeviceService {
 
             // 订阅设备端的publish主题，可以接收到设备端传过来的数据
             mqttService.subscribe("home/device/" + device.getId() + "/data");
+
+            // 添加订阅的主题到数据库
+            MqttSubscription mqttSubscription = new MqttSubscription();
+            mqttSubscription.setTopic("home/device/" + device.getId() + "/data");
+            mqttSubscription.setUserId(userId);
+            mqttSubscriptionMapper.insert(mqttSubscription);
 
             return ResponseEntity.ok(Result.success("Device added successfully"));
         } catch (Exception e) {
@@ -143,6 +154,7 @@ public class DeviceServiceImpl implements DeviceService {
                                 LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                 );
                 mqttService.unsubscribe("home/device/" + id + "/status"); // 取消订阅
+                mqttSubscriptionMapper.delete("home/device/" + id + "/data", userId); // 删除在数据库中的订阅记录
             }
             return ResponseEntity.ok(Result.success("Device deleted successfully"));
         } catch (Exception e) {
