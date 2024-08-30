@@ -153,7 +153,7 @@ public class DeviceServiceImpl implements DeviceService {
                                 "', at time " +
                                 LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                 );
-                mqttService.unsubscribe("home/device/" + id + "/status"); // 取消订阅
+                mqttService.unsubscribe("home/device/" + id + "/data"); // 取消订阅
                 mqttSubscriptionMapper.delete("home/device/" + id + "/data", userId); // 删除在数据库中的订阅记录
             }
             return ResponseEntity.ok(Result.success("Device deleted successfully"));
