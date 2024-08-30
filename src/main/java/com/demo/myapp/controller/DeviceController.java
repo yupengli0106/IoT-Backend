@@ -66,7 +66,10 @@ public class DeviceController {
 
     @GetMapping("/page/{page}/size/{size}")
     public PagedModel<EntityModel<Device>> getDevicesByPage(@PathVariable int page, @PathVariable int size) {
-        // TODO: need to check the page and size: Page index must not be less than zero (error)
+        // Spring Data 的分页索引从 0 开始，而前端通常从 1 开始，所以这里需要处理一下，避免出现 page < 0 的情况
+        if (page < 0) {
+            page = 0;
+        }
         Pageable pageable = PageRequest.of(page, size);
         Page<Device> devicePage = deviceService.getDevicesByPage(pageable);
         return pagedResourcesAssembler.toModel(devicePage);
