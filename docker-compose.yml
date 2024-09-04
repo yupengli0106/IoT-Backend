@@ -1,40 +1,86 @@
 version: '3.8'
 
+#下面的所有volumes是为了持久化数据，且是在server上已经提前创建好的！
+#部署前需要先创建好这些目录和配置（密码和访问权限等...）,否则会报错。如果不需要持久化数据，可以删除这些volumes。
+
 services:
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    depends_on:
-      - MySQL
-      - Redis
-      - Eclipse-mosquitto
-    env_file: # TODO: 目前先使用.env文件，后续要使用Docker secrets！
+    depends_on: # 仅能保证服务的启动顺序，但不能确保服务在依赖的服务完全可用时再启动
+      MySQL: # 依赖MySQL服务
+        condition: service_healthy
+      Redis: # 依赖Redis服务
+        condition: service_healthy
+      Eclipse-mosquitto: # 依赖Eclipse-mosquitto服务
+        condition: service_started
+    env_file: # TODO: 目前先使用.env文件，后续可以使用Docker secrets更加安全
       - .env
     ports:
       - "8080:8080"
 
   MySQL:
     image: mysql:latest
-    environment:
+    container_name: mysql-container
+    environment: # 设置mysql的root用户密码：在启动容器时会自动创建一个名为root的用户，并设置密码
       - MYSQL_ROOT_PASSWORD=${Database_Password}
     ports:
       - "3306:3306"
+    volumes:
+      - /my/own/datadir/mysql:/var/lib/mysql  # 保持现有的绑定挂载
+    networks:
+      - mysql-network
+    restart: always
+    healthcheck: # 增强可用性检测
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   Redis:
     image: redis:latest
-    environment:
+    container_name: redis-container
+    environment: #这里是为了下面的healthcheck使用，实际的密码在redis.conf中配置好了的
       - REDIS_PASSWORD=${Redis_Password}
+    volumes:
+      - /my/own/datadir/redis/data:/data  # 挂载本地数据目录到 Redis 容器
+      - /my/own/datadir/redis/redis.conf:/usr/local/etc/redis/redis.conf  # 挂载 Redis 配置文件
     ports:
       - "6379:6379"
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]  # 使用挂载的配置文件启动 Redis, 配置的密码
+    networks:
+      - mysql-network
+    restart: always  # 自动重启策略
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${Redis_Password}", "ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
 
   Eclipse-mosquitto:
-    image: eclipse-mosquitto
-    environment:
-      - MOSQUITTO_USERNAME=${Mqtt_Username}
-      - MOSQUITTO_PASSWORD=${Mqtt_Password}
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto-container
+#    environment:
+#      - MOSQUITTO_USERNAME=${Mqtt_Username}
+#      - MOSQUITTO_PASSWORD=${Mqtt_Password}
     ports:
       - "1883:1883"
+    volumes:
+      - /my/own/datadir/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf  # 自定义配置文件
+      - /my/own/datadir/mosquitto/data:/mosquitto/data  # 数据挂载
+      - /my/own/datadir/mosquitto/log:/mosquitto/log  # 日志挂载
+      - /my/own/datadir/mosquitto/passwordfile:/etc/mosquitto/passwordfile  # 持久化密码文件
+      - /my/own/datadir/mosquitto/persistence:/mosquitto/persistence  # 持久化存储目录
+    networks:
+      - mysql-network
+    restart: always  # 确保容器在崩溃后自动重启
+    command: [ "/usr/sbin/mosquitto", "-c", "/mosquitto/config/mosquitto.conf" ]  # 使用自定义配置文件启动
+
+networks:
+  mysql-network:
+    driver: bridge
 
 secrets:
   Aliyun_IP:
