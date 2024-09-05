@@ -1,6 +1,8 @@
 package com.demo.myapp.service.impl;
 
+import com.demo.myapp.mapper.UserMapper;
 import com.demo.myapp.pojo.LoginUser;
+import jakarta.annotation.Resource;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +14,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
+
+    @Resource
+    UserMapper userMapper;
 
     public LoginUser getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -27,11 +32,11 @@ public class UserService {
     }
 
     public String getCurrentUsername() {
-        return getCurrentUser().getUser().getUsername();
+        return userMapper.getUsernameById(getCurrentUserId());
     }
 
     public String getCurrentUserEmail() {
-        return getCurrentUser().getUser().getEmail();
+        return userMapper.findEmailById(getCurrentUserId());
     }
 }
 

@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -61,6 +62,13 @@ public class LoginServiceImpl implements LoginService {
             String token = JwtUtil.generateToken(claims);
             // Store the token in the redis for 1 hour
             redisTemplate.opsForValue().set(token,loginUser, 1, TimeUnit.HOURS);
+
+            // 维护 email 与 token 的映射（使用 Set 可以防止重复存储）。[这里是后加的为了实现修改密码时删除原有的token]
+            String userTokenKey = "user_tokens:" + loginUser.getUser().getEmail();
+            //以userTokenKey为key，将token存入redis的set集合中（userTokenKey不仅是key，也是一个代指redis中的set数据结构）
+            redisTemplate.opsForSet().add(userTokenKey, token);
+            //额外设置过期时间为1小时，因为opsForSet().add() 方法没有直接提供设置过期时间的参数。
+            redisTemplate.expire(userTokenKey, 1, TimeUnit.HOURS);
 
             // 创建包含token和roles的响应
             Map<String, Object> response = new HashMap<>();
@@ -178,6 +186,8 @@ public class LoginServiceImpl implements LoginService {
         redisTemplate.delete(user.getEmail());
         redisTemplate.delete("temp_user:" + user.getEmail() + ":updateProfile");
 
+        // TODO: 可以考虑更新 SecurityContext 中的用户信息更快
+
         return ResponseEntity.ok(Result.success("Profile updated successfully"));
     }
 
@@ -197,7 +207,6 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public ResponseEntity<Result> updateProfile(User user) {
-        // TODO: 如果修改了密码，需要删除redis中的token。仅仅修改了其他信息，不需要删除token，不需要重新登录！
         if (user == null || user.getEmail() == null) {
             return ResponseEntity.status(400).body(Result.error(400, "Email or other fields are empty"));
         }
@@ -206,12 +215,20 @@ public class LoginServiceImpl implements LoginService {
         Long userId = userService.getCurrentUserId();
         user.setId(userId);
 
+        // 获取当前用户的 email
+        String currentEmail = userService.getCurrentUserEmail();
+        String newEmail = removeSpacesByRegex(user.getEmail());
+
         //如果修改了邮箱则需要验证邮箱验证码
-        if (!userService.getCurrentUserEmail().equals(user.getEmail())) {
+        if (!currentEmail.equals(newEmail)) {
             //检查新邮箱是否已存在
-            if (userMapper.getEmailByEmail(removeSpacesByRegex(user.getEmail())) != null) {
+            if (userMapper.getEmailByEmail(newEmail) != null) {
                 return ResponseEntity.status(400).body(Result.error(400, "Email already exists"));
             }
+
+            user.setEmail(newEmail);// 重新设置邮箱
+            user.setUsername(user.getUsername());// 重新设置用户名
+
             //验证邮箱
             return storeCodeInRedis(user, "updateProfile");
         } else {//如果没有修改邮箱，则直接更新用户信息
@@ -236,15 +253,34 @@ public class LoginServiceImpl implements LoginService {
         if (user == null || user.getEmail() == null || user.getPassword() == null) {
             return ResponseEntity.status(400).body(Result.error(400, "Email or password is empty"));
         }
-        //TODO: 是否可以删除redis中的token？
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         //!这里是根据email去修改密码的，在上一步的resetPassword方法中已经将email存入了user对象中
         userMapper.changePassword(user);
-        redisTemplate.delete(user.getEmail());
-        redisTemplate.delete("temp_user:" + user.getEmail() + ":resetPassword");
+
+        // 删除 Redis 中与用户相关的 token 和重置密码的记录
+        removeUserTokensFromRedis(user.getEmail(), "resetPassword");
 
         return ResponseEntity.ok(Result.success("Password reset successfully"));
     }
 
+    /**
+     * delete user tokens from redis and remove the temporary user data
+     * @param email user email
+     * @param action the action e.g. resetPassword, register, updateProfile etc.
+     */
+    private void removeUserTokensFromRedis(String email, String action) {
+        // 删除用户登录的 token
+        String userTokenKey = "user_tokens:" + email;
+        Set<Object> tokenObjects = redisTemplate.opsForSet().members(userTokenKey);
+        if (tokenObjects != null && !tokenObjects.isEmpty()) {
+            tokenObjects.stream()
+                    .filter(token -> token instanceof String)
+                    .forEach(token -> redisTemplate.delete((String) token));// 删除set集合中的每个token，因为token也是redis中的key可能含有其他数据
+            redisTemplate.delete(userTokenKey);  // 删除存储用户token的set集合
+        }
+
+        redisTemplate.delete(email);//删除临时存储的验证码
+        redisTemplate.delete("temp_user:" + email + ":" + action);//删除临时存储的用户信息
+    }
 
 }
