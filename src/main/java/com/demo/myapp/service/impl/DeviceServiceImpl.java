@@ -2,8 +2,10 @@ package com.demo.myapp.service.impl;
 
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.mapper.DeviceMapper;
+import com.demo.myapp.mapper.EnergyMapper;
 import com.demo.myapp.mapper.MqttSubscriptionMapper;
 import com.demo.myapp.pojo.Device;
+import com.demo.myapp.pojo.Energy;
 import com.demo.myapp.pojo.LoginUser;
 import com.demo.myapp.pojo.MqttSubscription;
 import com.demo.myapp.service.DeviceService;
@@ -30,6 +32,9 @@ import java.util.List;
 public class DeviceServiceImpl implements DeviceService {
     @Resource
     private DeviceMapper deviceMapper;
+
+    @Resource
+    private EnergyMapper energyMapper;
 
     @Resource
     private MqttService mqttService;
@@ -225,5 +230,11 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     public long getOfflineDevices() {
         return deviceMapper.countOfflineDevices(userService.getCurrentUserId());
+    }
+
+    @Override
+    public List<Energy> getAllEnergy() {
+        Long userId = userService.getCurrentUserId();
+        return energyMapper.getAllEnergy(userId);
     }
 }

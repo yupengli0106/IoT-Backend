@@ -2,6 +2,7 @@ package com.demo.myapp.service;
 
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.Device;
+import com.demo.myapp.pojo.Energy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -27,4 +28,10 @@ public interface  DeviceService {
     long getOnlineDevices();
 
     long getOfflineDevices();
+
+    /**
+     * 获取当前用户所有设备的每天能耗信息
+     * @return 能耗信息列表
+     */
+    List<Energy> getAllEnergy();
 }

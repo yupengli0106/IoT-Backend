@@ -2,6 +2,7 @@ package com.demo.myapp.controller;
 
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.Device;
+import com.demo.myapp.pojo.Energy;
 import com.demo.myapp.pojo.UserActivity;
 import com.demo.myapp.service.DeviceService;
 import com.demo.myapp.service.UserActivityService;
@@ -94,5 +95,11 @@ public class DeviceController {
     public List<UserActivity> getUserActivities() {
         return userActivityService.getUserActivities();
     }
+
+    @GetMapping("/energy")
+    public List<Energy> getAllEnergy() {
+        return deviceService.getAllEnergy();
+    }
+
 }
 

@@ -57,8 +57,7 @@ public class LoginServiceImpl implements LoginService {
             LoginUser loginUser = (LoginUser) authentication.getPrincipal();
             // Generate a token
             Map<String, Object> claims = new HashMap<>();
-            claims.put("username", loginUser.getUsername());
-            claims.put("password", loginUser.getPassword());
+            claims.put("username", loginUser.getUsername());// TODO: 可以考虑使用put更多的信息，然后给前端解析，就不用下面再额外写一个map的response了
             String token = JwtUtil.generateToken(claims);
             // Store the token in the redis for 1 hour
             redisTemplate.opsForValue().set(token,loginUser, 1, TimeUnit.HOURS);
