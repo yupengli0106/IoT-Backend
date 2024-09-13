@@ -8,6 +8,8 @@ import com.demo.myapp.pojo.User;
 import com.demo.myapp.service.LoginService;
 import com.demo.myapp.utils.JwtUtil;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,6 +48,8 @@ public class LoginServiceImpl implements LoginService {
     EmailService emailService;
     @Resource
     UserService userService;
+
+    private static final Logger log = LoggerFactory.getLogger(LoginServiceImpl.class);
 
     @Override
     public ResponseEntity<Result> login(User user) {
@@ -140,18 +145,22 @@ public class LoginServiceImpl implements LoginService {
     private ResponseEntity<Result> storeCodeInRedis(User user, String action) {
         // verify the email by sending a verification code
         String email = removeSpacesByRegex(user.getEmail());
-        String code;
-        try {
-            code = removeSpacesByRegex(emailService.sendVerificationCode(email));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Result.error(500, "Failed to send verification code"));
-        }
-        // 临时存储验证码
-        redisTemplate.opsForValue().set(email, code, 3, TimeUnit.MINUTES);
-        // 临时存储用户信息
-        redisTemplate.opsForValue().set("temp_user:" + email + ":" + action, user, 4, TimeUnit.MINUTES);
 
-        return ResponseEntity.ok(Result.success("Verification code sent to your email"));
+        // async send verification code to email, Future is used to get the result of the async operation
+        CompletableFuture<String> future = emailService.sendVerificationCode(email);
+        future.thenAccept(code -> {
+            // 临时存储验证码
+            redisTemplate.opsForValue().set(email, code, 3, TimeUnit.MINUTES);
+            // 临时存储用户信息
+            redisTemplate.opsForValue().set("temp_user:" + email + ":" + action, user, 4, TimeUnit.MINUTES);
+        }).exceptionally(e -> {
+            // 异步操作失败log
+            log.error("Failed to send verification code to email: {}", email, e);
+            return null;// 返回null，表示不处理异步操作的异常
+        });
+
+        // 异步操作，通知用户验证码已发送
+        return ResponseEntity.ok(Result.success("Verification code is being sent to your email"));
     }
 
     @Override
