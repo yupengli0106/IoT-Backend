@@ -3,9 +3,12 @@ package com.demo.myapp.service.impl;
 import com.demo.myapp.pojo.UserActivity;
 import com.demo.myapp.service.UserActivityService;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.demo.myapp.mapper.UserActivityMapper;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.List;
@@ -21,6 +24,8 @@ public class UserActivityServiceImpl implements UserActivityService {
     private UserActivityMapper userActivityMapper;
     @Resource
     private UserService userService;
+
+    private final Logger logger = LoggerFactory.getLogger(UserActivityServiceImpl.class);
 
     private final int MAX_ACTIVITIES = 100; // 每个用户最多保存100条活动记录
     private final int FIXED_RATE = 1000 * 60 * 60 * 24 * 7; // 每7天清理一次
@@ -41,7 +46,7 @@ public class UserActivityServiceImpl implements UserActivityService {
                 userActivityMapper.deleteExcessActivities(userId, MAX_ACTIVITIES);
             }
         }catch (Exception e){
-            e.printStackTrace();
+            logger.error("Failed to cleanup user activities: {}", e.getMessage());
         }
     }
 
@@ -51,13 +56,30 @@ public class UserActivityServiceImpl implements UserActivityService {
         return  userActivityMapper.findUserActivities(userId);
     }
 
+    // 插入一条记录
     @Override
+    @Transactional
     public void logUserActivity(Long userId, String username, String deviceName, String details) {
         UserActivity userActivity = new UserActivity();
         userActivity.setUserId(userId);
         userActivity.setUsername(username);
         userActivity.setDeviceName(deviceName);
         userActivity.setDetails(details);
-        userActivityMapper.insertUserActivity(userActivity);
+        try {
+            userActivityMapper.insertUserActivity(userActivity);
+        } catch (Exception e) {
+            logger.error("Failed to log user activity: {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    // 批量插入
+    public void logUserActivities(List<UserActivity> activities) {
+        try {
+            userActivityMapper.insertActivities(activities);
+        } catch (Exception e) {
+            logger.error("Failed to log user activities: {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -11,6 +11,9 @@ import java.util.List;
  */
 public interface UserActivityService {
     List<UserActivity> getUserActivities();
+    // 插入一条记录
     void logUserActivity(Long userId, String username, String deviceName, String details);
+    // 批量插入
+    void logUserActivities(List<UserActivity> userActivities);
 
 }

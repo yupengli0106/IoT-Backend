@@ -25,4 +25,14 @@
         )
     </delete>
 
+    <!-- 批量插入用户活动记录 -->
+    <insert id="insertActivities">
+        INSERT INTO user_activities (user_id, username, details)
+        VALUES
+        <foreach collection="activities" item="activity" separator=",">
+            (#{activity.userId}, #{activity.username}, #{activity.details})
+        </foreach>
+    </insert>
+
+
 </mapper>

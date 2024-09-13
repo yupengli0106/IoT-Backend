@@ -25,8 +25,8 @@ public interface DeviceMapper {
     @Update("UPDATE devices SET name = #{name}, type = #{type} WHERE id = #{id} AND user_id = #{userId}")
     void editDevice(Device device);
 
-    @Delete("DELETE FROM devices WHERE id = #{id} AND user_id = #{userId}")
-    void deleteDeviceById(Long id, Long userId);
+    //批量删除，但是要注意mysql的in语句有长度限制。目前我们的项目还达不到这个限制，后续可以考虑分批删除。
+    void deleteDevicesByIds(@Param("ids") List<Long> ids, @Param("userId") Long userId);
 
     @Select("SELECT * FROM devices WHERE user_id = #{userId} LIMIT #{pageSize} OFFSET #{offset}")
     List<Device> findDevicesByPage(@Param("userId") Long userId, @Param("pageSize") int pageSize, @Param("offset") int offset);

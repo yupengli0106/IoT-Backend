@@ -17,6 +17,7 @@ import org.json.JSONObject;
 
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.util.List;
 
 
 /**
@@ -27,19 +28,14 @@ import java.sql.Date;
 
 @Service
 public class MqttService {
-
     @Resource
     private IMqttClient mqttClient;
-
     @Resource
     private WebSocketHandler webSocketHandler;
-
     @Resource
     MqttSubscriptionMapper mqttSubscriptionMapper;
-
     @Resource
     private EnergyMapper energyMapper;
-
     @Resource
     private DeviceMapper deviceMapper;
 
@@ -105,13 +101,13 @@ public class MqttService {
     }
 
     /**
-     * 取消订阅
-     * @param topic 主题
+     * 批量取消订阅
+     * @param topics 主题列表
      * @throws MqttException 异常
      */
-    public void unsubscribe(String topic) throws MqttException {
-        mqttClient.unsubscribe(topic);
-        logger.info("Unsubscribed from topic: {}", topic);
+    public void unsubscribe(List<String> topics) throws MqttException {
+        mqttClient.unsubscribe(topics.toArray(new String[0]));
+        logger.info("Unsubscribed from topic: {}", topics);
     }
 
     /**

@@ -19,8 +19,12 @@ public interface UserActivityMapper {
     @Select("SELECT * FROM user_activities WHERE user_id = #{userId}")
     List<UserActivity> findUserActivities(Long userId);
 
+    // 插入一条记录
     @Insert("INSERT INTO user_activities (user_id, username, device_name, details) VALUES (#{userId}, #{username}, #{deviceName}, #{details})")
     void insertUserActivity(UserActivity userActivity);
+
+    // 批量插入
+    void insertActivities(@Param("activities") List<UserActivity> activities);
 
     @Select("SELECT DISTINCT user_id FROM user_activities")
     List<Long> findAllUserIds();

@@ -17,8 +17,7 @@ public interface MqttSubscriptionMapper {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(MqttSubscription mqttSubscription);
 
-    @Delete("DELETE FROM mqtt_subscriptions WHERE topic = #{topic} AND user_id = #{userId}")
-    void delete(String topic, long userId);
+    void deleteSubscriptions(@Param("topics") List<String> topics, @Param("userId") Long userId);
 
     @Select("SELECT topic FROM mqtt_subscriptions")
     List<String> findAllTopics();

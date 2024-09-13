@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.demo.myapp.mapper.DeviceMapper">
+
+    <!-- 批量删除设备，需要注意 in 的限制 -->
+    <delete id="deleteDevicesByIds">
+        DELETE FROM devices
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND user_id = #{userId}
+    </delete>
+
+</mapper>
