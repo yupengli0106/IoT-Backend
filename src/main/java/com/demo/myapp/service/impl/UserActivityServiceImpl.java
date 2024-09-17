@@ -5,10 +5,10 @@ import com.demo.myapp.service.UserActivityService;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.demo.myapp.mapper.UserActivityMapper;
-import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.List;
@@ -58,7 +58,7 @@ public class UserActivityServiceImpl implements UserActivityService {
 
     // 插入一条记录
     @Override
-    @Transactional
+    @Async("taskExecutor")
     public void logUserActivity(Long userId, String username, String deviceName, String details) {
         UserActivity userActivity = new UserActivity();
         userActivity.setUserId(userId);
@@ -74,6 +74,7 @@ public class UserActivityServiceImpl implements UserActivityService {
     }
 
     // 批量插入
+    @Async("taskExecutor")
     public void logUserActivities(List<UserActivity> activities) {
         try {
             userActivityMapper.insertActivities(activities);

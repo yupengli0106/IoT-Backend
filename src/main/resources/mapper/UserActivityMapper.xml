@@ -13,6 +13,7 @@
 <!--    外层查询删除：外层 DELETE 语句会删除 user_id 的所有记录中不在子查询结果集中的记录（即超出 100 条以外的旧记录）。-->
 
     <delete id="deleteExcessActivities" parameterType="map">
+        # TODO: 可以考虑下面的删除语句，它的效率更高，使用了 JOIN 操作，而不是子查询。
         DELETE FROM user_activities
         WHERE user_id = #{userId}
           AND id NOT IN (
@@ -24,6 +25,19 @@
                            ) AS subquery_alias
         )
     </delete>
+
+<!--    <delete id="deleteExcessActivities" parameterType="map">-->
+<!--    # 这个删除的效率更高，使用了 JOIN 操作，而不是子查询。-->
+<!--    # 18446744073709551615 作为第二个参数，表示从第 #{maxActivities} 条记录开始，获取之后的所有记录，因为这个数字足够大，实际上涵盖了所有可能剩余的记录。-->
+<!--        DELETE ua FROM user_activities ua-->
+<!--                           JOIN (-->
+<!--            SELECT id FROM user_activities-->
+<!--            WHERE user_id = #{userId}-->
+<!--            ORDER BY update_time DESC-->
+<!--            LIMIT #{maxActivities}, 18446744073709551615  &#45;&#45; From maxActivities + 1 onwards-->
+<!--        ) AS excess_activities ON ua.id = excess_activities.id-->
+<!--    </delete>-->
+
 
     <!-- 批量插入用户活动记录 -->
     <insert id="insertActivities">
