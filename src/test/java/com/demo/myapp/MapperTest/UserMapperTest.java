@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -85,6 +86,9 @@ public class UserMapperTest {
         for (String permission : permissionsByEmail) {
             System.out.println(permission);
         }
+        Collections.sort(permissions);
+        Collections.sort(permissionsByEmail);
+
         assert permissions.equals(permissionsByEmail);
     }
 }
