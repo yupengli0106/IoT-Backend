@@ -11,6 +11,7 @@ import jakarta.annotation.Resource;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -209,7 +210,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    public Page<Device> getDevicesByPage(Pageable pageable) { // TODO: 后续可以改进，将数据存在redis中，提高查询速度？
+    public Page<Device> getDevicesByPage(Pageable pageable) { // TODO: cache 后续可以改进，将数据存在redis中，提高查询速度？
         //get current user id
         LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         long currentUserId = loginUser.getUser().getId();
@@ -225,22 +226,25 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
+    @Cacheable(value = "devices", key = "'countDevices'")
     public long countDevices() {
         return deviceMapper.countDevices(userService.getCurrentUserId());
     }
 
     @Override
+    @Cacheable(value = "devices", key = "'onlineDevices'")
     public long getOnlineDevices() {
         return deviceMapper.countOnlineDevices(userService.getCurrentUserId());
     }
 
     @Override
+    @Cacheable(value = "devices", key = "'offlineDevices'")
     public long getOfflineDevices() {
         return deviceMapper.countOfflineDevices(userService.getCurrentUserId());
     }
 
     @Override
-    public List<Energy> getAllEnergy() {
+    public List<Energy> getAllEnergy() {// TODO: can be cached?
         Long userId = userService.getCurrentUserId();
         return energyMapper.getAllEnergy(userId);
     }

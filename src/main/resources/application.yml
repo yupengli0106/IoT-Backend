@@ -22,6 +22,10 @@ spring:
       host: ${Aliyun_IP}
       password: ${Redis_Password}
 
+  # Cache
+  cache:
+    type: redis
+
   # use gmail to send email
   mail:
     default-encoding: utf-8

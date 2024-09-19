@@ -51,7 +51,7 @@ public class UserActivityServiceImpl implements UserActivityService {
     }
 
     @Override
-    public List<UserActivity> getUserActivities() {
+    public List<UserActivity> getUserActivities() {// TODO: add cache
         Long userId = userService.getCurrentUserId();
         return  userActivityMapper.findUserActivities(userId);
     }
