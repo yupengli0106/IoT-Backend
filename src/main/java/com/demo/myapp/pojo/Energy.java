@@ -28,4 +28,5 @@ public class Energy {
     private BigDecimal energy;
     private Long userId;
     private Date recordDate;
+    private String sensorType;
 }

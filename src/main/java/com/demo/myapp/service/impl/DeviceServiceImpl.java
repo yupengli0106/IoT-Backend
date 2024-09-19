@@ -189,27 +189,22 @@ public class DeviceServiceImpl implements DeviceService {
 
         device.setUserId(userId);
         device.setStatus(command);
-        try { // 使用MQTT发送控制命令
-            String topic = "home/device/" + device.getId() + "/status";
-            mqttService.publish(topic, command);// 发布消息
-            deviceMapper.updateDeviceStatus(device); // 更新设备状态在数据库
-            //记录用户操作
-            userActivityService.logUserActivity(
-                    userId,
-                    userService.getCurrentUsername(),
-                    device.getName(),
-                    "Controlled device by user '" +
-                            userService.getCurrentUsername() +
-                            "', device name is '" + device.getName() +
-                            "', command is '" + command +
-                            "', at time " + LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-            );
-            return ResponseEntity.ok(Result.success("Device controlled successfully"));
-        } catch (MqttException e) {
-            logger.error("MQTT publish failed error controlling device", e);
-            //TODO: 这里是不是不能吞掉异常，需要抛出异常，然后全局异常处理？不然会导致事物无法回滚？
-            return ResponseEntity.badRequest().body(Result.error(405, "Error controlling device"));
-        }
+        // 使用MQTT发送控制命令
+        String topic = "home/device/" + device.getId() + "/status";
+        mqttService.publish(topic, command);// 发布消息
+        deviceMapper.updateDeviceStatus(device); // 更新设备状态在数据库
+        //记录用户操作
+        userActivityService.logUserActivity(
+                userId,
+                userService.getCurrentUsername(),
+                device.getName(),
+                "Controlled device by user '" +
+                        userService.getCurrentUsername() +
+                        "', device name is '" + device.getName() +
+                        "', command is '" + command +
+                        "', at time " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        );
+        return ResponseEntity.ok(Result.success("Device controlled successfully"));
 
     }
 

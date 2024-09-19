@@ -5,11 +5,9 @@ import com.demo.myapp.mapper.DeviceMapper;
 import com.demo.myapp.mapper.EnergyMapper;
 import com.demo.myapp.mapper.MqttSubscriptionMapper;
 import com.demo.myapp.pojo.Energy;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
-import org.eclipse.paho.client.mqttv3.IMqttClient;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.*;
+import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -29,7 +27,7 @@ import java.util.List;
 @Service
 public class MqttService {
     @Resource
-    private IMqttClient mqttClient;
+    private IMqttAsyncClient mqttClient;
     @Resource
     private WebSocketHandler webSocketHandler;
     @Resource
@@ -43,19 +41,17 @@ public class MqttService {
 
 
     /**
-     * 这里是为了在服务端重启的时候，通过查询数据库，重新关注所有之前已经存在关注的topic
+     * 这里是为了在服务端重启的时候，通过查询数据库，重新关注所有之前已经存在关注的topic.
+     * 在mqtt config中会通过application context来调用这个方法
      */
-    @PostConstruct
     public void resubscribeAllTopics() {
         try {
-            mqttSubscriptionMapper.findAllTopics()
-                    .forEach(topic -> {
-                        try {
-                            this.subscribe(topic);
-                        } catch (MqttException e) {
-                            logger.error("Failed to subscribe to topic: {}", topic);
-                        }
-                    });
+            List<String> topics = mqttSubscriptionMapper.findAllTopics();
+            if (topics != null) {
+                topics.forEach(this::subscribe);
+            } else {
+                logger.warn("No topics found to resubscribe.");
+            }
         } catch (Exception e) {
             logger.error("Failed to find topics throw mqttSubscriptionMapper", e);
         }
@@ -66,9 +62,14 @@ public class MqttService {
      * 发布消息
      * @param topic 主题
      * @param payload 消息内容
-     * @throws MqttException 异常
      */
-    public void publish(String topic, String payload) throws MqttException {
+    public void publish(String topic, String payload) {
+        // TODO: could implement a message queue to store messages until the client reconnects?
+        if (!mqttClient.isConnected()) {
+            logger.error("MQTT client is not connected. Cannot publish to topic: {}", topic);
+            return;
+        }
+
         MqttMessage message = new MqttMessage(payload.getBytes());
         /*
          * QoS 级别简述:
@@ -80,24 +81,51 @@ public class MqttService {
          * 	•	解释：消息仅传递一次，确保不重复也不丢失
          */
         message.setQos(1);
-        mqttClient.publish(topic, message);
-        logger.info("Published message to topic {}: {}", topic, payload);
+        try {
+            mqttClient.publish(topic, message, null, new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    logger.info("Successfully published message to topic {}: {}", topic, payload);
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    logger.error("Failed to publish message to topic {}: {}", topic, exception.getMessage());
+                }
+            });
+        } catch (MqttException e) {
+            logger.error("Exception while publishing message to topic {}: {}", topic, e.getMessage());
+        }
     }
 
     /**
      * 订阅主题
      * @param topic 主题
-     * @throws MqttException 异常
      */
-    public void subscribe(String topic) throws MqttException {
-        mqttClient.subscribe(topic, (t, msg) -> {
-            String payload = new String(msg.getPayload());
-            logger.info("Received message on topic {}: {}", t, payload);
-            System.out.println("Received message: " + payload);
-            // 处理接收到的消息
-            handleIncomingData(payload);
-        });
-        logger.info("Subscribed to topic: {}", topic);
+    public void subscribe(String topic) {
+        if (!mqttClient.isConnected()) {
+            logger.error("MQTT client is not connected. Cannot subscribe to topic: {}", topic);
+            return;
+        }
+
+        try {
+            mqttClient.subscribe(topic, 1, null, new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    logger.info("Subscribed to topic: {}", topic);
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    logger.error("Failed to subscribe to topic {}: {}", topic, exception.getMessage());
+                }
+            }, (t, msg) -> { // handle incoming message here after successfully subscribed
+                String payload = new String(msg.getPayload());
+                handleIncomingData(payload);
+            });
+        } catch (MqttException e) {
+            logger.error("Exception while subscribing to topic {}: {}", topic, e.getMessage());
+        }
     }
 
     /**
@@ -106,8 +134,17 @@ public class MqttService {
      * @throws MqttException 异常
      */
     public void unsubscribe(List<String> topics) throws MqttException {
-        mqttClient.unsubscribe(topics.toArray(new String[0]));
-        logger.info("Unsubscribed from topic: {}", topics);
+        mqttClient.unsubscribe(topics.toArray(new String[0]), null, new IMqttActionListener() {
+            @Override
+            public void onSuccess(IMqttToken asyncActionToken) {
+                logger.info("Unsubscribed from topics: {}", topics);
+            }
+
+            @Override
+            public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                logger.error("Failed to unsubscribe from topics: {}", topics);
+            }
+        });
     }
 
     /**
@@ -115,27 +152,38 @@ public class MqttService {
      * @param data 数据内容
      */
     private void handleIncomingData(String data) {
-        //如果是energy数据，直接存储到数据库
-        JSONObject jsonObject = new JSONObject(data);//将字符串转换为json对象
+        try {
+            JSONObject jsonObject = new JSONObject(data);
+            String sensorType = jsonObject.getString("sensorType");
 
-        String sensorType = jsonObject.getString("sensorType");
-        if ("energy".equals(sensorType)) {
-            // ! 存储能耗数据, 这里要注意jsonObject.getLong还是jsonObject.getString等
+            switch (sensorType) {
+                case "energy":
+                    handleEnergyData(jsonObject);
+                    break;
+                default:
+                    handleSensorData(jsonObject);
+                    break;
+            }
+        } catch (JSONException e) {
+            logger.error("Failed to parse incoming data: {}", data, e);
+        }
+    }
+
+    /**
+     * private method to handle energy data, store to database, and for front-end display
+     * @param jsonObject energy data in JSON format
+     */
+    private void handleEnergyData(JSONObject jsonObject) {
+        try {
             long deviceId = jsonObject.getLong("deviceId");
             Date recordDate = Date.valueOf(jsonObject.getString("date"));
             BigDecimal totalEnergy = BigDecimal.valueOf(jsonObject.getDouble("totalEnergy"));
+            String sensorType = jsonObject.getString("sensorType");
 
-            /*
-                * 通过设备ID找到用户ID, 不能通过securityContext获取当前用户ID，因为这里是异步处理消息，不在请求线程中。
-                * 通过securityContext获取当前用户ID的方法只能在请求线程中使用，通常是与HTTP请求相关的操作才能获取到。
-                * 这里是MQTT消息处理，不在请求线程中，所以要通过其他方式获取当前用户ID。
-                * 还因为这里是存入数据库，因为也不能依赖物理设备的用户ID，设备不一定是存用户ID, 降低耦合性。
-               TODO: 这里是否可以改进？
-             */
-            long userId = deviceMapper.findDeviceById(deviceId).getUserId();
-            if (userId<=0) {//如果userId<=0，说明没有找到对应的设备
+            Long userId = deviceMapper.findDeviceById(deviceId).getUserId();
+            if (userId == null || userId <= 0) {
                 logger.error("Failed to get user id by device id: {}", deviceId);
-                throw new RuntimeException("Failed to get user id by device id: " + deviceId);
+                return;
             }
 
             Energy energy = new Energy();
@@ -143,24 +191,30 @@ public class MqttService {
             energy.setEnergy(totalEnergy);
             energy.setRecordDate(recordDate);
             energy.setUserId(userId);
+            energy.setSensorType(sensorType);
 
             try {
-                // 这里是接受模拟器的数据，且energy数据是每日结算出当天的总能耗才发送过来。
                 energyMapper.insertEnergy(energy);
+                logger.info("Stored energy data successfully for deviceId: {}", deviceId);
             } catch (Exception e) {
-                logger.error("Failed to store energy data: {}", data);
+                logger.error("Failed to store energy data for deviceId {}: {}", deviceId, e.getMessage());
             }
-
-            logger.info("Stored energy data successfully: {}", data);
+        } catch (JSONException e) {
+            logger.error("Failed to parse energy data: {}", jsonObject.toString(), e);
         }
+    }
 
-        // 如果是温度，湿度等数据，通过 WebSocket 发送数据到客户端, 用于实时更新UI
+    /**
+     * private method to handle sensor data, send to clients via WebSocket to display
+     * @param jsonObject sensor data in JSON format
+     */
+    private void handleSensorData(JSONObject jsonObject) {
         try {
+            String data = jsonObject.toString();
             webSocketHandler.sendMessageToClients(data);
             logger.info("WebSocket successfully sent message to clients: {}", data);
         } catch (Exception e) {
-            logger.error("Failed to send message to clients: {}", data);
+            logger.error("Failed to send message to clients: {}", jsonObject.toString(), e);
         }
-
     }
 }

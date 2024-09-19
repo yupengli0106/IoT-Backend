@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 @Component
 public class WebSocketHandler extends TextWebSocketHandler {
 
-    private final List<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
+    private final List<WebSocketSession> sessions = new CopyOnWriteArrayList<>();//线程安全的list
     private final Logger logger = Logger.getLogger(WebSocketHandler.class.getName());
 
     @Override
@@ -35,12 +35,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     public void sendMessageToClients(String message) {
         sessions.forEach(session -> {
-            try {
-                System.out.println("\nSending message to client: \n" + message);
-                session.sendMessage(new TextMessage(message));
-            } catch (IOException e) {
-                e.printStackTrace();
-                logger.warning("Failed to send message to client: " + e.getMessage());
+            synchronized (session){//同步session, 防止多线程操作session
+                try {
+                    session.sendMessage(new TextMessage(message));
+                } catch (IOException e) {
+                    logger.warning("WebSocketHandler failed to send message to client: " + e.getMessage());
+                    sessions.remove(session); // 移除无效的session
+                }
             }
         });
     }
