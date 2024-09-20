@@ -4,8 +4,9 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -19,11 +20,13 @@ import java.util.Map;
 
 @Component
 public class JwtUtil {
+    // TODO: when in production, store following values in environment variables or configuration files instead of hardcoding them
     private static final String SECRET_KEY = "*** I bet you can't guess this secret key hhh ***";
     private static final String ISSUER = "MyApp"; // application name
     private static final long EXPIRATION_TIME = 24 * 60 * 60 * 1000; // 24h
 
     private static final Algorithm algorithm = Algorithm.HMAC256(SECRET_KEY); // 初始化算法
+    private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
     /**
      * Generates a JWT token
@@ -39,6 +42,7 @@ public class JwtUtil {
                     .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME))// 添加过期时间
                     .sign(algorithm); // 签名
         } catch (Exception e) {
+            logger.error("Error generating token", e);
             throw new RuntimeException("Error generating token", e);
         }
     }
@@ -48,7 +52,7 @@ public class JwtUtil {
      * @param token The token to parse
      * @return User claims as a Claim object
      */
-    public static Claim parseToken(String token) {
+    public static Map<String, Object> parseToken(String token) {
         try {
             JWTVerifier verifier = JWT.require(algorithm)
                     .withIssuer(ISSUER)
@@ -56,11 +60,10 @@ public class JwtUtil {
 
             DecodedJWT jwt = verifier.verify(token); // 使用验证器验证并解码JWT
 
-            return jwt.getClaim("userClaims"); // 返回用户信息
+            return jwt.getClaim("userClaims").asMap(); // 直接返回 Map
         } catch (JWTVerificationException e) {
             // JWT验证失败，可能是因为签名不匹配、过期等原因
-            // TODO 在这里可以记录日志或者其他适当的处理
-            e.printStackTrace();
+            logger.error("Error parsing token", e);
             throw new RuntimeException("Error parsing token", e);
         }
     }

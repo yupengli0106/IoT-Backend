@@ -31,8 +31,8 @@ public class JWT {
         claims.put("test", 1);
         String token = JwtUtil.generateToken(claims);
 
-        Claim claim = JwtUtil.parseToken(token);
-        System.out.println(claim.asMap());
+        Map<String, Object> stringObjectMap = JwtUtil.parseToken(token);
+        System.out.println(stringObjectMap);
     }
 
     @Test
