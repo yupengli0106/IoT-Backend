@@ -8,9 +8,13 @@ import com.demo.myapp.pojo.User;
 import com.demo.myapp.service.LoginService;
 import com.demo.myapp.utils.JwtUtil;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,7 +23,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -52,7 +55,7 @@ public class LoginServiceImpl implements LoginService {
     private static final Logger log = LoggerFactory.getLogger(LoginServiceImpl.class);
 
     @Override
-    public ResponseEntity<Result> login(User user) {
+    public ResponseEntity<Result> login(User user, HttpServletResponse response) {
         // use SpringSecurity's AuthenticationManager to authenticate the user
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
@@ -72,10 +75,18 @@ public class LoginServiceImpl implements LoginService {
             // Generate a token
             String token = jwtUtil.generateToken(userInfo);
 
+            // 将 token 设置为 HttpOnly 和 Secure Cookie
+            Cookie jwtCookie = new Cookie("httpOnlyToken", token);
+            jwtCookie.setHttpOnly(true); // 设置 HttpOnly 防止 XSS 攻击
+            jwtCookie.setSecure(true); // 设置 Secure 确保只在 HTTPS 中传输
+            jwtCookie.setMaxAge(24 * 60 * 60); // 设置有效期为 1 天（单位：秒）
+            jwtCookie.setPath("/"); // 适用于整个应用
+//            jwtCookie.setDomain("localhost"); // 这个应该是你的域名，只有在这个域名下才能访问到这个 cookie
+            response.addCookie(jwtCookie); // 将 cookie 添加到响应中
+
             // return the token and user info to the client
             // for stateless authentication, the server does not need to store the token
             Map<String, Object> responseData = new HashMap<>();
-            responseData.put("token", token);
             responseData.put("user", userInfo);
             responseData.put("message", "Login successful");
 
@@ -105,22 +116,23 @@ public class LoginServiceImpl implements LoginService {
     }
 
     @Override
-    public ResponseEntity<Result> logout(String token) {
-        // if the token is not null and starts with " Bearer ", remove "Bearer " from the token
-        if (token !=null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
+    public ResponseEntity<Result> logout(HttpServletRequest request, HttpServletResponse response) {
+        // Extract token using utility method
+        String token = jwtUtil.extractTokenFromCookies(request);
+
+        if (token != null) {
+            // Invalidate the cookie
+            Cookie cookie = new Cookie("httpOnlyToken", null);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(0);
+            response.addCookie(cookie);
+
+            return ResponseEntity.ok(Result.success("Logout successful"));
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.error(400, "Token not found in cookies"));
         }
-
-        // 获取 JWT 的过期时间
-        Date expirationDate = jwtUtil.getTokenExpirationTime(token);
-
-        // 将 token 添加到 Redis 黑名单，并设置与 JWT 相同的过期时间
-        long remainingTime = expirationDate.getTime() - System.currentTimeMillis();
-        if (remainingTime > 0) {
-            redisTemplate.opsForValue().set("blacklist:" + token, true, remainingTime, TimeUnit.MILLISECONDS);
-        }
-
-        return ResponseEntity.ok(Result.success("Logout successful"));
     }
 
     /**

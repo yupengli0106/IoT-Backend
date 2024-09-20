@@ -6,6 +6,8 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -112,5 +114,22 @@ public class JwtUtil {
             logger.error("Error getting token expiration time", e);
             throw new RuntimeException("Error getting token expiration time", e);
         }
+    }
+
+    /**
+     * Extracts the token from the cookies in the request
+     * @param request The HTTP request
+     * @return The token if found, null otherwise
+     */
+    public String extractTokenFromCookies(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("httpOnlyToken")) {
+                    return cookie.getValue(); // Return the token from the cookie
+                }
+            }
+        }
+        return null; // Return null if the token is not found
     }
 }

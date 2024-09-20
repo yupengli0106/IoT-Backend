@@ -8,7 +8,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -31,12 +30,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        // get the token from the request header
-        String token = request.getHeader("Authorization");
-        // if the token is not null and starts with " Bearer ", remove "Bearer " from the token
-        if (token !=null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
+        // 从请求中提取出token
+        String token = jwtUtil.extractTokenFromCookies(request);
 
         // if token is null clear context and pass the request to the next filter(usernamePasswordAuthenticationFilter)
         if (token == null) {

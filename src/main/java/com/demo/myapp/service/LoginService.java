@@ -2,6 +2,8 @@ package com.demo.myapp.service;
 
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.User;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -10,7 +12,7 @@ import org.springframework.http.ResponseEntity;
  * @Description:
  */
 public interface LoginService {
-    ResponseEntity<Result> login(User user);
+    ResponseEntity<Result> login(User user, HttpServletResponse response);
 
     /**
      * register a new user and send the verification code to the user's email
@@ -19,7 +21,7 @@ public interface LoginService {
      */
     ResponseEntity<Result> register(User user);
 
-    ResponseEntity<Result> logout(String token);
+    ResponseEntity<Result> logout(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * after the Register API is called, the user will receive an email with a verification code,

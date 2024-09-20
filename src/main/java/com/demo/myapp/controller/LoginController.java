@@ -4,6 +4,8 @@ import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.User;
 import com.demo.myapp.service.LoginService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,13 +22,13 @@ public class LoginController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<Result> login(@RequestBody User user) {
-        return loginService.login(user);
+    public ResponseEntity<Result> login(@RequestBody User user, HttpServletResponse response) {
+        return loginService.login(user, response);
     }
 
     @DeleteMapping("/logout")
-    public ResponseEntity<Result> logout(@RequestHeader("Authorization") String token) {
-        return loginService.logout(token);
+    public ResponseEntity<Result> logout(HttpServletRequest request, HttpServletResponse response) {
+        return loginService.logout(request, response);
     }
 
     @PostMapping("/register")
