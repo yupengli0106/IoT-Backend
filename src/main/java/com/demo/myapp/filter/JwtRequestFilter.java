@@ -1,6 +1,7 @@
 package com.demo.myapp.filter;
 
 import com.demo.myapp.pojo.LoginUser;
+import com.demo.myapp.pojo.User;
 import com.demo.myapp.utils.JwtUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: Yupeng Li
@@ -24,13 +27,13 @@ import java.io.IOException;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
     @Resource
-    RedisTemplate<String, Object> redisTemplate;
+    JwtUtil jwtUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // get the token from the request header
         String token = request.getHeader("Authorization");
-        // if the token is not null and starts with "Bearer ", remove "Bearer " from the token
+        // if the token is not null and starts with " Bearer ", remove "Bearer " from the token
         if (token !=null && token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
@@ -43,7 +46,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         // check if the token is valid
-        if (!JwtUtil.isValidToken(token)){
+        if (!jwtUtil.isValidToken(token)){
             SecurityContextHolder.clearContext();
             // 401 Unauthorized
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -51,14 +54,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             return;
         }
 
-        // check if the user is logged in
-        LoginUser loginUser = (LoginUser) redisTemplate.opsForValue().get(token);
-        if (loginUser == null) {
-            SecurityContextHolder.clearContext();
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"message\": \"User not logged in\"}");
-            return;
-        }
+        //get the LoginUser after passed all the checks
+        LoginUser loginUser = getLoginUser(token);
 
         // pass all the authentication checks, current user is logged in, then store the user in the security context
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
@@ -72,4 +69,34 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
 
     }
+
+    /**
+     * parse the token and get the user information to create a LoginUser object
+     * @param token token to parse
+     * @return LoginUser object
+     */
+    private LoginUser getLoginUser(String token) {
+        // Parse the token to get the user information
+        Map<String, Object> claims = jwtUtil.parseToken(token);
+
+        // Extract user information from the token
+        String username = claims.get("username").toString();
+        Long userId = Long.parseLong(claims.get("userId").toString());
+        String email = claims.get("email").toString();
+        List<String> roles = (List<String>) claims.get("roles");
+        List<String> permissions = (List<String>) claims.get("permissions");
+
+        // Create a user object
+        User user = new User();
+        user.setId(userId);
+        user.setUsername(username);
+        user.setEmail(email);
+        // Password is not included in the token for security reasons
+        user.setPassword(null);
+        user.setEnabled(true);
+
+        return new LoginUser(user, permissions, roles);
+    }
+
+
 }

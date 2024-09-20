@@ -11,19 +11,17 @@ import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -48,6 +46,8 @@ public class LoginServiceImpl implements LoginService {
     EmailService emailService;
     @Resource
     UserService userService;
+    @Resource
+    JwtUtil jwtUtil;
 
     private static final Logger log = LoggerFactory.getLogger(LoginServiceImpl.class);
 
@@ -60,27 +60,26 @@ public class LoginServiceImpl implements LoginService {
         //pass the authentication
         if (authentication.isAuthenticated()){
             LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+
+            // user info
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("roles", loginUser.getRoles());
+            userInfo.put("username", loginUser.getUser().getUsername());
+            userInfo.put("email", loginUser.getUser().getEmail());
+            userInfo.put("permissions", loginUser.getPermissions());
+            userInfo.put("userId", loginUser.getUser().getId());
+
             // Generate a token
-            Map<String, Object> claims = new HashMap<>();
-            claims.put("username", loginUser.getUsername());// TODO: 可以考虑使用put更多的信息，然后给前端解析，就不用下面再额外写一个map的response了
-            String token = JwtUtil.generateToken(claims);
-            // Store the token in the redis for 1 hour
-            redisTemplate.opsForValue().set(token,loginUser, 1, TimeUnit.HOURS);
+            String token = jwtUtil.generateToken(userInfo);
 
-            // 维护 email 与 token 的映射（使用 Set 可以防止重复存储）。[这里是后加的为了实现修改密码时删除原有的token]
-            String userTokenKey = "user_tokens:" + loginUser.getUser().getEmail();
-            //以userTokenKey为key，将token存入redis的set集合中（userTokenKey不仅是key，也是一个代指redis中的set数据结构）
-            redisTemplate.opsForSet().add(userTokenKey, token);
-            //额外设置过期时间为1小时，因为opsForSet().add() 方法没有直接提供设置过期时间的参数。
-            redisTemplate.expire(userTokenKey, 1, TimeUnit.HOURS);
+            // return the token and user info to the client
+            // for stateless authentication, the server does not need to store the token
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("token", token);
+            responseData.put("user", userInfo);
+            responseData.put("message", "Login successful");
 
-            // 创建包含token和roles的响应
-            Map<String, Object> response = new HashMap<>();
-            response.put("token", token);
-            response.put("roles", loginUser.getRoles());
-            response.put("email", loginUser.getUser().getEmail());
-
-            return ResponseEntity.ok(Result.success(response));
+            return ResponseEntity.ok(Result.success(responseData));
         }else {
             // If the authentication fails, return an error message
             return ResponseEntity.status(403).body(Result.error(403,"Password or Username is incorrect"));
@@ -107,24 +106,21 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public ResponseEntity<Result> logout(String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(403).body(Result.error(403,"Token is empty"));
-        }
-
-        if (token.startsWith("Bearer ")) {
+        // if the token is not null and starts with " Bearer ", remove "Bearer " from the token
+        if (token !=null && token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
-        // Delete the token from Redis
-        Boolean wasDeleted = redisTemplate.delete(token);
-        // Check if the token was successfully deleted
-        if (wasDeleted == null || !wasDeleted) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Result.error(500, "Failed to delete token"));
+
+        // 获取 JWT 的过期时间
+        Date expirationDate = jwtUtil.getTokenExpirationTime(token);
+
+        // 将 token 添加到 Redis 黑名单，并设置与 JWT 相同的过期时间
+        long remainingTime = expirationDate.getTime() - System.currentTimeMillis();
+        if (remainingTime > 0) {
+            redisTemplate.opsForValue().set("blacklist:" + token, true, remainingTime, TimeUnit.MILLISECONDS);
         }
 
-        // Clear the SecurityContextHolder
-        SecurityContextHolder.clearContext();
-
-        return ResponseEntity.ok(Result.success("Logout successfully"));
+        return ResponseEntity.ok(Result.success("Logout successful"));
     }
 
     /**
@@ -265,30 +261,7 @@ public class LoginServiceImpl implements LoginService {
         //!这里是根据email去修改密码的，在上一步的resetPassword方法中已经将email存入了user对象中
         userMapper.changePassword(user);
 
-        // 删除 Redis 中与用户相关的 token 和重置密码的记录
-        removeUserTokensFromRedis(user.getEmail(), "resetPassword");
-
         return ResponseEntity.ok(Result.success("Password reset successfully"));
-    }
-
-    /**
-     * delete user tokens from redis and remove the temporary user data
-     * @param email user email
-     * @param action the action e.g. resetPassword, register, updateProfile etc.
-     */
-    private void removeUserTokensFromRedis(String email, String action) {
-        // 删除用户登录的 token
-        String userTokenKey = "user_tokens:" + email;
-        Set<Object> tokenObjects = redisTemplate.opsForSet().members(userTokenKey);
-        if (tokenObjects != null && !tokenObjects.isEmpty()) {
-            tokenObjects.stream()
-                    .filter(token -> token instanceof String)
-                    .forEach(token -> redisTemplate.delete((String) token));// 删除set集合中的每个token，因为token也是redis中的key可能含有其他数据
-            redisTemplate.delete(userTokenKey);  // 删除存储用户token的set集合
-        }
-
-        redisTemplate.delete(email);//删除临时存储的验证码
-        redisTemplate.delete("temp_user:" + email + ":" + action);//删除临时存储的用户信息
     }
 
 }

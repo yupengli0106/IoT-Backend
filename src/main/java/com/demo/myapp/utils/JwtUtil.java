@@ -5,8 +5,10 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -20,6 +22,9 @@ import java.util.Map;
 
 @Component
 public class JwtUtil {
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate;
+
     // TODO: when in production, store following values in environment variables or configuration files instead of hardcoding them
     private static final String SECRET_KEY = "*** I bet you can't guess this secret key hhh ***";
     private static final String ISSUER = "MyApp"; // application name
@@ -33,7 +38,7 @@ public class JwtUtil {
      * @param claims Business data such as user id, username, etc.
      * @return token
      */
-    public static String generateToken(Map<String, Object> claims) {
+    public String generateToken(Map<String, Object> claims) {
         try {
             return JWT.create()
                     .withClaim("userClaims", claims) // 更明确地命名claims
@@ -52,14 +57,13 @@ public class JwtUtil {
      * @param token The token to parse
      * @return User claims as a Claim object
      */
-    public static Map<String, Object> parseToken(String token) {
+    public Map<String, Object> parseToken(String token) {
         try {
             JWTVerifier verifier = JWT.require(algorithm)
                     .withIssuer(ISSUER)
                     .build(); // 创建JWT验证器
 
             DecodedJWT jwt = verifier.verify(token); // 使用验证器验证并解码JWT
-
             return jwt.getClaim("userClaims").asMap(); // 直接返回 Map
         } catch (JWTVerificationException e) {
             // JWT验证失败，可能是因为签名不匹配、过期等原因
@@ -73,7 +77,12 @@ public class JwtUtil {
      * @param token The token to validate
      * @return true if the token is valid, false otherwise
      */
-    public static boolean isValidToken(String token) {
+    public boolean isValidToken(String token) {
+        //check if the token on blacklist
+        if (Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + token))) {
+            return false;
+        }
+        // verify the token
         try {
             JWTVerifier verifier = JWT.require(algorithm)
                     .withIssuer(ISSUER)
@@ -83,6 +92,25 @@ public class JwtUtil {
             return true;
         } catch (JWTVerificationException e) {
             return false;
+        }
+    }
+
+    /**
+     * Get the expiration time of a JWT token
+     * @param token The token to check
+     * @return The expiration time of the token
+     */
+    public Date getTokenExpirationTime(String token) {
+        try {
+            JWTVerifier verifier = JWT.require(algorithm)
+                    .withIssuer(ISSUER)
+                    .build();
+
+            DecodedJWT jwt = verifier.verify(token);
+            return jwt.getExpiresAt(); // 直接返回过期时间
+        } catch (JWTVerificationException e) {
+            logger.error("Error getting token expiration time", e);
+            throw new RuntimeException("Error getting token expiration time", e);
         }
     }
 }
