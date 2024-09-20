@@ -226,7 +226,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    @Cacheable(value = "devices", key = "'countDevices'")
+    @Cacheable(value = "devices", key = "'countDevices'") // TODO: need to be fixed: cache key is not correct here and in other methods below as well
     public long countDevices() {
         return deviceMapper.countDevices(userService.getCurrentUserId());
     }
