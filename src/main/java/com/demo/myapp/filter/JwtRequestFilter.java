@@ -2,6 +2,7 @@ package com.demo.myapp.filter;
 
 import com.demo.myapp.pojo.LoginUser;
 import com.demo.myapp.pojo.User;
+import com.demo.myapp.service.impl.CachedUserService;
 import com.demo.myapp.utils.JwtUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -27,6 +29,8 @@ import java.util.Map;
 public class JwtRequestFilter extends OncePerRequestFilter {
     @Resource
     JwtUtil jwtUtil;
+    @Resource
+    CachedUserService cachedUserService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -69,26 +73,24 @@ public class JwtRequestFilter extends OncePerRequestFilter {
      * parse the token and get the user information to create a LoginUser object
      * @param token token to parse
      * @return LoginUser object
+     * @throws UsernameNotFoundException if the user is not found
+     * @Description: get the newest user information from the database if the user is not in the cache!
      */
     private LoginUser getLoginUser(String token) {
         // Parse the token to get the user information
         Map<String, Object> claims = jwtUtil.parseToken(token);
 
-        // Extract user information from the token
-        String username = claims.get("username").toString();
+        // get the user information from the database can make sure the user is up to date
         Long userId = Long.parseLong(claims.get("userId").toString());
-        String email = claims.get("email").toString();
-        List<String> roles = (List<String>) claims.get("roles");
-        List<String> permissions = (List<String>) claims.get("permissions");
-
-        // Create a user object
-        User user = new User();
-        user.setId(userId);
-        user.setUsername(username);
-        user.setEmail(email);
-        // Password is not included in the token for security reasons
-        user.setPassword(null);
-        user.setEnabled(true);
+        // if the user is not in the cache, get the user from the database
+        User user = cachedUserService.getUserById(userId);
+        if (user != null) {
+            user.setPassword(null);// 不将密码传递保存在redis中
+        }else {
+            throw new UsernameNotFoundException("User not found");
+        }
+        List<String> roles = cachedUserService.getRolesByUserId(userId);
+        List<String> permissions = cachedUserService.getPermissionsByUserId(userId);
 
         return new LoginUser(user, permissions, roles);
     }

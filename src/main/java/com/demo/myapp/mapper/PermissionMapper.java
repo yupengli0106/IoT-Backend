@@ -12,4 +12,6 @@ import java.util.List;
 @Mapper
 public interface PermissionMapper {
     List<String> findPermissionsByUsername(String username);
+
+    List<String> findPermissionsByUserId(Long userId);
 }

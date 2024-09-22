@@ -15,4 +15,14 @@
         WHERE u.username = #{username}
     </select>
 
+    <select id="findPermissionsByUserId" resultType="string" parameterType="long">
+        SELECT p.name AS permission
+        FROM users u
+                 JOIN user_roles ur ON u.id = ur.user_id
+                 JOIN roles r ON ur.role_id = r.id
+                 JOIN role_permissions rp ON r.id = rp.role_id
+                 JOIN permissions p ON rp.permission_id = p.id
+        WHERE u.username = #{username}
+    </select>
+
 </mapper>

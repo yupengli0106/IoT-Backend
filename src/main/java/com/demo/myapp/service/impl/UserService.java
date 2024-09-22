@@ -32,11 +32,11 @@ public class UserService {
     }
 
     public String getCurrentUsername() {
-        return userMapper.getUsernameById(getCurrentUserId());
+        return getCurrentUser().getUser().getUsername();
     }
 
     public String getCurrentUserEmail() {
-        return userMapper.findEmailById(getCurrentUserId());
+        return getCurrentUser().getUser().getEmail();
     }
 }
 

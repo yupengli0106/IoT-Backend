@@ -1,6 +1,7 @@
 package com.demo.myapp.service.impl;
 
 import com.demo.myapp.controller.response.Result;
+import com.demo.myapp.mapper.PermissionMapper;
 import com.demo.myapp.mapper.RoleMapper;
 import com.demo.myapp.mapper.UserMapper;
 import com.demo.myapp.pojo.LoginUser;
@@ -19,11 +20,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +54,8 @@ public class LoginServiceImpl implements LoginService {
     UserService userService;
     @Resource
     JwtUtil jwtUtil;
+    @Resource
+    CachedUserService cachedUserService;
 
     private static final Logger log = LoggerFactory.getLogger(LoginServiceImpl.class);
 
@@ -64,7 +69,9 @@ public class LoginServiceImpl implements LoginService {
         if (authentication.isAuthenticated()){
             LoginUser loginUser = (LoginUser) authentication.getPrincipal();
 
-            // user info
+            // TODO: 可以考虑使用UUID作为用户标识，而不是直接使用数据库中的ID。可以使用 Twitter 的 Snowflake 算法 或类似的生成策略，这样既有顺序性，又有全局唯一性，并且比 UUID 更高效。
+
+            // user info for front-end
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("roles", loginUser.getRoles());
             userInfo.put("username", loginUser.getUser().getUsername());
@@ -72,8 +79,10 @@ public class LoginServiceImpl implements LoginService {
             userInfo.put("permissions", loginUser.getPermissions());
             userInfo.put("userId", loginUser.getUser().getId());
 
-            // Generate a token
-            String token = jwtUtil.generateToken(userInfo);
+            // Generate a token by only storing the user id in the token
+            Map<String, Object> tokenMap = new HashMap<>();
+            tokenMap.put("userId", loginUser.getUser().getId());
+            String token = jwtUtil.generateToken(tokenMap);
 
             // 将 token 设置为 HttpOnly 和 Secure Cookie
             Cookie jwtCookie = new Cookie("httpOnlyToken", token);
@@ -202,7 +211,19 @@ public class LoginServiceImpl implements LoginService {
         redisTemplate.delete(user.getEmail());
         redisTemplate.delete("temp_user:" + user.getEmail() + ":updateProfile");
 
-        // TODO: 可以考虑更新 SecurityContext 中的用户信息更快
+        // 每当用户更新profile，移除所有的用户缓存，以便下次查询时重新加载数据
+        evictAllUserCaches(user.getId());
+
+        // 创建新的 LoginUser 对象，使用更新Spring Security上下文中的 Authentication 对象
+        List<String> permissions = cachedUserService.getPermissionsByUserId(user.getId());
+        List<String> roles = cachedUserService.getRolesByUserId(user.getId());
+        LoginUser updatedLoginUser = new LoginUser(user, permissions, roles);
+        // 创建新的 Authentication 对象
+        Authentication newAuth = new UsernamePasswordAuthenticationToken(
+                updatedLoginUser, null, updatedLoginUser.getAuthorities()
+        );
+        // 在每次更新用户信息后，都需要更新一下 SecurityContextHolder 中的 Authentication 对象
+        SecurityContextHolder.getContext().setAuthentication(newAuth);
 
         return ResponseEntity.ok(Result.success("Profile updated successfully"));
     }
@@ -274,6 +295,16 @@ public class LoginServiceImpl implements LoginService {
         userMapper.changePassword(user);
 
         return ResponseEntity.ok(Result.success("Password reset successfully"));
+    }
+
+    /**
+     * 移除所有用户缓存
+     * @param userId 用户ID
+     */
+    private void evictAllUserCaches(Long userId) {
+        cachedUserService.evictUserCache(userId);
+        cachedUserService.evictRolesCache(userId);
+        cachedUserService.evictPermissionsCache(userId);
     }
 
 }
