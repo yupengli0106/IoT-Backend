@@ -1,7 +1,6 @@
 package com.demo.myapp.service.impl;
 
 import com.demo.myapp.controller.response.Result;
-import com.demo.myapp.mapper.PermissionMapper;
 import com.demo.myapp.mapper.RoleMapper;
 import com.demo.myapp.mapper.UserMapper;
 import com.demo.myapp.pojo.LoginUser;
@@ -163,17 +162,22 @@ public class LoginServiceImpl implements LoginService {
         // verify the email by sending a verification code
         String email = removeSpacesByRegex(user.getEmail());
 
-        // async send verification code to email, Future is used to get the result of the async operation
-        CompletableFuture<String> future = emailService.sendVerificationCode(email);
-        future.thenAccept(code -> {
-            // 临时存储验证码
-            redisTemplate.opsForValue().set(email, code, 3, TimeUnit.MINUTES);
-            // 临时存储用户信息
-            redisTemplate.opsForValue().set("temp_user:" + email + ":" + action, user, 4, TimeUnit.MINUTES);
-        }).exceptionally(e -> {
-            // 异步操作失败log
-            log.error("Failed to send verification code to email: {}", email, e);
-            return null;// 返回null，表示不处理异步操作的异常
+        // 生成验证码并 先 存入Redis
+        String code = emailService.generateVerificationCode();
+        redisTemplate.opsForValue().set(email, code, 3, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set("temp_user:" + email + ":" + action, user, 4, TimeUnit.MINUTES);
+
+        // 异步发送验证码邮件
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendVerificationCode(email, code);
+            } catch (Exception e) {
+                // 邮件发送失败时，从Redis中删除验证码
+                redisTemplate.delete(email);
+                redisTemplate.delete("temp_user:" + email + ":" + action);
+                // 记录发送邮件的异常
+                log.error("Failed to send verification code to email: {}", email, e);
+            }
         });
 
         // 异步操作，通知用户验证码已发送
