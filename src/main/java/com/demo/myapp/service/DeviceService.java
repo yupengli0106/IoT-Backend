@@ -22,7 +22,7 @@ public interface  DeviceService {
     ResponseEntity<Result> updateDevice(Long id, Device device);
     ResponseEntity<Result> deleteDevice(List<Long> id);
     ResponseEntity<Result> controlDevice(Long id, String command);
-    Page<Device> getDevicesByPage(Pageable pageable);
+    Page<Device> getDevicesByPage(Pageable pageable, long userId);
 
     /**
      * 获取当前用户所有设备的每天能耗信息

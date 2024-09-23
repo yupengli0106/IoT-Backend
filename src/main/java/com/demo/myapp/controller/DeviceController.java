@@ -4,6 +4,7 @@ import com.demo.myapp.dto.DeviceStatsDTO;
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.Device;
 import com.demo.myapp.pojo.Energy;
+import com.demo.myapp.pojo.RestPage;
 import com.demo.myapp.pojo.UserActivity;
 import com.demo.myapp.service.DeviceService;
 import com.demo.myapp.service.UserActivityService;
@@ -12,9 +13,6 @@ import jakarta.annotation.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,11 +27,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/devices")
 public class DeviceController {
-
     @Resource
     private DeviceService deviceService;
-    @Resource
-    private PagedResourcesAssembler<Device> pagedResourcesAssembler; // 分页资源装配器
     @Resource
     private UserActivityService userActivityService;
     @Resource
@@ -70,14 +65,16 @@ public class DeviceController {
     }
 
     @GetMapping("/page/{page}/size/{size}")
-    public PagedModel<EntityModel<Device>> getDevicesByPage(@PathVariable int page, @PathVariable int size) {
-        // Spring Data 的分页索引从 0 开始，而前端通常从 1 开始，所以这里需要处理一下，避免出现 page < 0 的情况
-        if (page < 0) {
-            page = 0;
-        }
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Device> devicePage = deviceService.getDevicesByPage(pageable);
-        return pagedResourcesAssembler.toModel(devicePage);
+    public RestPage<Device> getDevicesByPage(@PathVariable int page, @PathVariable int size) {
+        long userId = userService.getCurrentUserId();
+        // 使用 Math.max 来保证 page 至少为 0
+        Pageable pageable = PageRequest.of(Math.max(page, 0), size);
+
+        // 调用 service 层的方法获取分页数据
+        Page<Device> devicePage = deviceService.getDevicesByPage(pageable, userId);
+
+        // 将 Page 转换为 RestPage 为了反序列化
+        return new RestPage<>(devicePage.getContent(), pageable.getPageNumber(), pageable.getPageSize(), devicePage.getTotalElements());
     }
 
     @GetMapping("/deviceStats")

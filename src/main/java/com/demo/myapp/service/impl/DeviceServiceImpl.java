@@ -12,13 +12,9 @@ import jakarta.annotation.Resource;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +42,8 @@ public class DeviceServiceImpl implements DeviceService {
     private UserActivityService userActivityService;
     @Resource
     private MqttSubscriptionMapper mqttSubscriptionMapper;
+    @Resource
+    private CachedDeviceService cachedDeviceService;
 
     private static final Logger logger = LoggerFactory.getLogger(DeviceServiceImpl.class);
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -67,6 +65,8 @@ public class DeviceServiceImpl implements DeviceService {
     public ResponseEntity<Result> addDevice(Device device) {
         // 获取当前登录用户的ID
         Long userId = userService.getCurrentUserId();
+        cachedDeviceService.clearDeviceStatsCache(userId); // !清除设备状态统计缓存
+        cachedDeviceService.clearDevicesByPageCache(userId); // !清除设备分页缓存
         // 检查设备名称是否重复
         if (deviceMapper.findDeviceByName(device.getName(),userId) != null) {
             return ResponseEntity.badRequest().body(Result.error(409, "Device name already exists"));
@@ -77,7 +77,6 @@ public class DeviceServiceImpl implements DeviceService {
         device.setName(device.getName());
         try { // 插入设备记录到数据库
             deviceMapper.insertDevice(device);
-            clearDeviceStatsCache(userId); // !清除设备状态统计缓存
 
             //记录用户操作
             userActivityService.logUserActivity(
@@ -103,6 +102,7 @@ public class DeviceServiceImpl implements DeviceService {
     @Transactional
     public ResponseEntity<Result> updateDevice(Long id, Device device) {
         Long userId = userService.getCurrentUserId();
+        cachedDeviceService.clearDevicesByPageCache(userId); // !清除设备分页缓存
         // 检查设备名称是否重复
         if (deviceMapper.findDeviceByName(device.getName(), userId) != null) {
             return ResponseEntity.badRequest().body(Result.error(405, "Device name already exists"));
@@ -143,6 +143,9 @@ public class DeviceServiceImpl implements DeviceService {
         LocalDateTime now = LocalDateTime.now();
         String timestamp = DATE_TIME_FORMATTER.format(now);
 
+        cachedDeviceService.clearDeviceStatsCache(userId); // !清除设备状态统计缓存
+        cachedDeviceService.clearDevicesByPageCache(userId); // !清除设备分页缓存
+
         try {
             // 批量删除设备
             // TODO：这里还需要注意不同的数据库对于in语句的限制，比如mysql最多1000个，我们目前不会有这么多设备，但是还是需要注意可以改进。
@@ -158,7 +161,6 @@ public class DeviceServiceImpl implements DeviceService {
 
             // 批量删除订阅记录
             mqttSubscriptionMapper.deleteSubscriptions(topics, userId);
-            clearDeviceStatsCache(userId); // !清除设备状态统计缓存
 
             // 批量记录用户活动
             List<UserActivity> activities = ids.stream().map(id -> {
@@ -182,10 +184,12 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    @Transactional
+//    @Transactional
     public ResponseEntity<Result> controlDevice(Long id, String command) {
         command = command.toUpperCase(); // 转换为大写
         Long userId = userService.getCurrentUserId();
+        cachedDeviceService.clearDeviceStatsCache(userId); // !清除设备状态统计缓存
+        cachedDeviceService.clearDevicesByPageCache(userId); // !清除设备分页缓存
         Device device = deviceMapper.findDeviceById(id);
         if (device == null || !device.getUserId().equals(userId)) {
             logger.error("User does not have permission to operate this device");
@@ -198,7 +202,6 @@ public class DeviceServiceImpl implements DeviceService {
         String topic = "home/device/" + device.getId() + "/status";
         mqttService.publish(topic, command);// 发布消息
         deviceMapper.updateDeviceStatus(device); // 更新设备状态在数据库
-        clearDeviceStatsCache(userId); // !清除设备状态统计缓存
         //记录用户操作
         userActivityService.logUserActivity(
                 userId,
@@ -215,19 +218,25 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    public Page<Device> getDevicesByPage(Pageable pageable) { // TODO: cache 后续可以改进，将数据存在redis中，提高查询速度？
-        //get current user id
-        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        long currentUserId = loginUser.getUser().getId();
-        // 分页查询设备
+    @Cacheable(value = "devicesByPage",
+            key = "'devicesByPage_' + #currentUserId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize",
+            condition = "#pageable.pageNumber <= 3")
+    public RestPage<Device> getDevicesByPage(Pageable pageable, long currentUserId) { // !仅缓存前三页热点数据
+        // 分页参数
         int pageSize = pageable.getPageSize();
         int offset = pageable.getPageNumber() * pageSize;
-        long totalDevices = deviceMapper.countDevices(currentUserId); // 计算设备的总数
+
+        // 查询设备总数
+        long totalDevices = deviceMapper.countDevices(currentUserId);
         if (offset >= totalDevices) { // 如果偏移量大于等于设备总数，返回空列表
-            return new PageImpl<>(List.of(), pageable, 0);
+            return new RestPage<>(List.of(), pageable.getPageNumber(), pageable.getPageSize(), 0);
         }
+
+        // 查询分页设备列表
         List<Device> devices = deviceMapper.findDevicesByPage(currentUserId,pageSize, offset);
-        return new PageImpl<>(devices, pageable, totalDevices);
+
+        // ！使用RestPage封装分页数据,继承了PageImpl.这样做是为了在cache的时候可以正确的被序列化
+        return new RestPage<>(devices, pageable.getPageNumber(), pageable.getPageSize(), totalDevices);
     }
 
 
@@ -267,11 +276,6 @@ public class DeviceServiceImpl implements DeviceService {
     @Cacheable(value = "deviceStats", key = "'deviceStats_' + #userId")
     public DeviceStatsDTO getDeviceStats(long userId) {
         return deviceMapper.getDeviceStats(userId);
-    }
-
-    @CacheEvict(value = "deviceStats", key = "'deviceStats_' + #userId")
-    public void clearDeviceStatsCache(long userId) {
-        // 清除设备状态统计缓存
     }
 
 }
