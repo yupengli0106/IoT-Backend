@@ -1,11 +1,13 @@
 package com.demo.myapp.controller;
 
+import com.demo.myapp.dto.DeviceStatsDTO;
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.Device;
 import com.demo.myapp.pojo.Energy;
 import com.demo.myapp.pojo.UserActivity;
 import com.demo.myapp.service.DeviceService;
 import com.demo.myapp.service.UserActivityService;
+import com.demo.myapp.service.impl.UserService;
 import jakarta.annotation.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +36,8 @@ public class DeviceController {
     private PagedResourcesAssembler<Device> pagedResourcesAssembler; // 分页资源装配器
     @Resource
     private UserActivityService userActivityService;
+    @Resource
+    UserService userService;
 
     @GetMapping("/get_all")
     public List<Device> getAllDevices() {
@@ -76,24 +80,16 @@ public class DeviceController {
         return pagedResourcesAssembler.toModel(devicePage);
     }
 
-    @GetMapping("/count")
-    public long countDevices() {
-        return deviceService.countDevices();
-    }
-
-    @GetMapping("/online")
-    public long getOnlineDevices() {
-        return deviceService.getOnlineDevices();
-    }
-
-    @GetMapping("/offline")
-    public long getOfflineDevices() {
-        return deviceService.getOfflineDevices();
+    @GetMapping("/deviceStats")
+    public ResponseEntity<DeviceStatsDTO> getDeviceStats() {
+        long userId = userService.getCurrentUserId();
+        return ResponseEntity.ok(deviceService.getDeviceStats(userId));
     }
 
     @GetMapping("/recent-activities")
     public List<UserActivity> getUserActivities() {
-        return userActivityService.getUserActivities();
+        Long userId = userService.getCurrentUserId();
+        return userActivityService.getUserActivities(userId);
     }
 
     @GetMapping("/energy")

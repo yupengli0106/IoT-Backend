@@ -1,5 +1,6 @@
 package com.demo.myapp.service;
 
+import com.demo.myapp.dto.DeviceStatsDTO;
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.pojo.Device;
 import com.demo.myapp.pojo.Energy;
@@ -23,15 +24,11 @@ public interface  DeviceService {
     ResponseEntity<Result> controlDevice(Long id, String command);
     Page<Device> getDevicesByPage(Pageable pageable);
 
-    long countDevices();
-
-    long getOnlineDevices();
-
-    long getOfflineDevices();
-
     /**
      * 获取当前用户所有设备的每天能耗信息
      * @return 能耗信息列表
      */
     List<Energy> getAllEnergy();
+
+    DeviceStatsDTO getDeviceStats(long userId);
 }

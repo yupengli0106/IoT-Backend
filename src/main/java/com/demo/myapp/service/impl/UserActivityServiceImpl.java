@@ -5,6 +5,7 @@ import com.demo.myapp.service.UserActivityService;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -51,8 +52,10 @@ public class UserActivityServiceImpl implements UserActivityService {
     }
 
     @Override
-    public List<UserActivity> getUserActivities() {// TODO: add cache
-        Long userId = userService.getCurrentUserId();
+    @Cacheable(value = "userActivities", key = "'userActivities_' + #userId")
+    public List<UserActivity> getUserActivities(long userId) {
+        // 这里设置了缓存，由于实时需求没有那么大，因此没有手动清理缓存
+        // 目前就根据cacheManager配置的10分钟过期时间来清理，后续可以根据业务需求来手动清理缓存
         return  userActivityMapper.findUserActivities(userId);
     }
 

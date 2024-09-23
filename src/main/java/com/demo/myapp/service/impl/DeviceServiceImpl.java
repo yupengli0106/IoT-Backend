@@ -1,5 +1,6 @@
 package com.demo.myapp.service.impl;
 
+import com.demo.myapp.dto.DeviceStatsDTO;
 import com.demo.myapp.controller.response.Result;
 import com.demo.myapp.mapper.DeviceMapper;
 import com.demo.myapp.mapper.EnergyMapper;
@@ -11,6 +12,7 @@ import jakarta.annotation.Resource;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -75,6 +77,7 @@ public class DeviceServiceImpl implements DeviceService {
         device.setName(device.getName());
         try { // 插入设备记录到数据库
             deviceMapper.insertDevice(device);
+            clearDeviceStatsCache(userId); // !清除设备状态统计缓存
 
             //记录用户操作
             userActivityService.logUserActivity(
@@ -155,6 +158,7 @@ public class DeviceServiceImpl implements DeviceService {
 
             // 批量删除订阅记录
             mqttSubscriptionMapper.deleteSubscriptions(topics, userId);
+            clearDeviceStatsCache(userId); // !清除设备状态统计缓存
 
             // 批量记录用户活动
             List<UserActivity> activities = ids.stream().map(id -> {
@@ -194,6 +198,7 @@ public class DeviceServiceImpl implements DeviceService {
         String topic = "home/device/" + device.getId() + "/status";
         mqttService.publish(topic, command);// 发布消息
         deviceMapper.updateDeviceStatus(device); // 更新设备状态在数据库
+        clearDeviceStatsCache(userId); // !清除设备状态统计缓存
         //记录用户操作
         userActivityService.logUserActivity(
                 userId,
@@ -225,23 +230,6 @@ public class DeviceServiceImpl implements DeviceService {
         return new PageImpl<>(devices, pageable, totalDevices);
     }
 
-    @Override
-    @Cacheable(value = "devices", key = "'countDevices'") // TODO: need to be fixed: cache key is not correct here and in other methods below as well
-    public long countDevices() {
-        return deviceMapper.countDevices(userService.getCurrentUserId());
-    }
-
-    @Override
-    @Cacheable(value = "devices", key = "'onlineDevices'")
-    public long getOnlineDevices() {
-        return deviceMapper.countOnlineDevices(userService.getCurrentUserId());
-    }
-
-    @Override
-    @Cacheable(value = "devices", key = "'offlineDevices'")
-    public long getOfflineDevices() {
-        return deviceMapper.countOfflineDevices(userService.getCurrentUserId());
-    }
 
     @Override
     public List<Energy> getAllEnergy() {// TODO: can be cached?
@@ -268,6 +256,22 @@ public class DeviceServiceImpl implements DeviceService {
             logger.error("Error adding mqtt subscription", e);
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * 获取设备状态统计：总设备数、在线设备数、离线设备数
+     * @param userId 用户ID
+     * @return 设备状态统计
+     */
+    @Override
+    @Cacheable(value = "deviceStats", key = "'deviceStats_' + #userId")
+    public DeviceStatsDTO getDeviceStats(long userId) {
+        return deviceMapper.getDeviceStats(userId);
+    }
+
+    @CacheEvict(value = "deviceStats", key = "'deviceStats_' + #userId")
+    public void clearDeviceStatsCache(long userId) {
+        // 清除设备状态统计缓存
     }
 
 }

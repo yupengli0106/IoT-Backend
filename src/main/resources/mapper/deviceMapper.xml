@@ -15,4 +15,13 @@
         AND user_id = #{userId}
     </delete>
 
+    <!-- 获取设备统计信息 totalDevices, onlineDevices, offlineDevices -->
+    <select id="getDeviceStats" resultType="com.demo.myapp.dto.DeviceStatsDTO" parameterType="long">
+        SELECT COUNT(*)                          AS totalDevices,
+               SUM(IF(status = 'ON', 1, 0))  AS onlineDevices,
+               SUM(IF(status = 'OFF', 1, 0)) AS offlineDevices
+        FROM devices
+        WHERE user_id = #{userId}
+    </select>
+
 </mapper>
