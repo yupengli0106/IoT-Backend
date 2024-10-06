@@ -1,11 +1,13 @@
 package com.demo.myapp.controller;
 
 import com.demo.myapp.controller.response.Result;
+import com.demo.myapp.enums.UserAction;
 import com.demo.myapp.pojo.User;
 import com.demo.myapp.service.LoginService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +40,13 @@ public class LoginController {
 
     @PostMapping("/verify-code")
     public ResponseEntity<Result> verifyCode(@RequestParam String email, @RequestParam String code, @RequestParam String action) {
-        return loginService.verifyCode(email, code, action);
+        try {
+            // 尝试将字符串转换为 UserAction 枚举
+            UserAction userAction = UserAction.valueOf(action.toUpperCase());
+            return loginService.verifyCode(email, code, userAction);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.error(400, "Invalid action parameter"));
+        }
     }
 
     @GetMapping("/home")

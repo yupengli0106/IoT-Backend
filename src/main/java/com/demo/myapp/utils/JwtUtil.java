@@ -81,7 +81,9 @@ public class JwtUtil {
      */
     public boolean isValidToken(String token) {
         //check if the token on blacklist
-        if (Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + token))) {
+        String redisTokenKey = "blacklist_tokens:" + token;
+        Boolean isBlacklisted = redisTemplate.hasKey(redisTokenKey);
+        if (Boolean.TRUE.equals(isBlacklisted)) {
             return false;
         }
         // verify the token

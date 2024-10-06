@@ -49,6 +49,7 @@ public class MqttConfig implements ApplicationContextAware {
             connOpts.setAutomaticReconnect(true); // 设置为true以启用自动重连
             connOpts.setUserName(username);
             connOpts.setPassword(password.toCharArray());
+            connOpts.getKeepAliveInterval(); // 默认为60s
             // 设置回调函数
             client.setCallback(new MqttCallbackExtended() {
                 @Override

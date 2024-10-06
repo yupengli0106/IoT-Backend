@@ -1,6 +1,7 @@
 package com.demo.myapp.service.impl;
 
 import com.demo.myapp.controller.response.Result;
+import com.demo.myapp.enums.UserAction;
 import com.demo.myapp.mapper.RoleMapper;
 import com.demo.myapp.mapper.UserMapper;
 import com.demo.myapp.pojo.LoginUser;
@@ -11,6 +12,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -24,6 +26,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,52 +64,47 @@ public class LoginServiceImpl implements LoginService {
     @Override
     public ResponseEntity<Result> login(User user, HttpServletResponse response) {
         // use SpringSecurity's AuthenticationManager to authenticate the user
+        // 如果认证失败，会抛出异常，由全局异常处理器处理（AuthenticationException）
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
-        //pass the authentication
-        if (authentication.isAuthenticated()){
-            LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+        // Successful authentication
+        LoginUser loginUser = (LoginUser) authentication.getPrincipal();
 
-            // TODO: 可以考虑使用UUID作为用户标识，而不是直接使用数据库中的ID。可以使用 Twitter 的 Snowflake 算法 或类似的生成策略，这样既有顺序性，又有全局唯一性，并且比 UUID 更高效。
+        // user info for front-end
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("roles", loginUser.getRoles());
+        userInfo.put("username", loginUser.getUser().getUsername());
+        userInfo.put("email", loginUser.getUser().getEmail());
+        userInfo.put("permissions", loginUser.getPermissions());
+        userInfo.put("userId", loginUser.getUser().getId());
 
-            // user info for front-end
-            Map<String, Object> userInfo = new HashMap<>();
-            userInfo.put("roles", loginUser.getRoles());
-            userInfo.put("username", loginUser.getUser().getUsername());
-            userInfo.put("email", loginUser.getUser().getEmail());
-            userInfo.put("permissions", loginUser.getPermissions());
-            userInfo.put("userId", loginUser.getUser().getId());
+        // Generate a token by only storing the user id in the token
+        Map<String, Object> tokenMap = new HashMap<>();
+        tokenMap.put("userId", loginUser.getUser().getId());
+        String token = jwtUtil.generateToken(tokenMap);
 
-            // Generate a token by only storing the user id in the token
-            Map<String, Object> tokenMap = new HashMap<>();
-            tokenMap.put("userId", loginUser.getUser().getId());
-            String token = jwtUtil.generateToken(tokenMap);
+        // 将 token 设置为 HttpOnly 和 Secure Cookie
+        Cookie jwtCookie = new Cookie("httpOnlyToken", token);
+        jwtCookie.setHttpOnly(true); // 设置 HttpOnly 防止 XSS 攻击
+        jwtCookie.setSecure(true); // 设置 Secure 确保只在 HTTPS 中传输
+        jwtCookie.setMaxAge(24 * 60 * 60); // 设置有效期为 1 天（单位：秒）注意Token的有效期需不需要和Cookie的有效期一致
+        jwtCookie.setPath("/"); // 适用于整个应用
+        //            jwtCookie.setDomain("localhost"); // 这个应该是你的域名，只有在这个域名下才能访问到这个 cookie
+        response.addCookie(jwtCookie); // 将 cookie 添加到响应中
 
-            // 将 token 设置为 HttpOnly 和 Secure Cookie
-            Cookie jwtCookie = new Cookie("httpOnlyToken", token);
-            jwtCookie.setHttpOnly(true); // 设置 HttpOnly 防止 XSS 攻击
-            jwtCookie.setSecure(true); // 设置 Secure 确保只在 HTTPS 中传输
-            jwtCookie.setMaxAge(24 * 60 * 60); // 设置有效期为 1 天（单位：秒）
-            jwtCookie.setPath("/"); // 适用于整个应用
-//            jwtCookie.setDomain("localhost"); // 这个应该是你的域名，只有在这个域名下才能访问到这个 cookie
-            response.addCookie(jwtCookie); // 将 cookie 添加到响应中
+        // return the token and user info to the client
+        // for stateless authentication, the server does not need to store the token
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("user", userInfo);
+        responseData.put("message", "Login successful");
 
-            // return the token and user info to the client
-            // for stateless authentication, the server does not need to store the token
-            Map<String, Object> responseData = new HashMap<>();
-            responseData.put("user", userInfo);
-            responseData.put("message", "Login successful");
-
-            return ResponseEntity.ok(Result.success(responseData));
-        }else {
-            // If the authentication fails, return an error message
-            return ResponseEntity.status(403).body(Result.error(403,"Password or Username is incorrect"));
-        }
+        return ResponseEntity.ok(Result.success(responseData));
     }
 
     @Override
-    public ResponseEntity<Result> register(User user) {
+    @Transactional
+    public ResponseEntity<Result> register(@Valid User user) {
         String username = removeSpacesByRegex(user.getUsername());
         String email = removeSpacesByRegex(user.getEmail());
         // Check if the username already exists
@@ -115,11 +113,11 @@ public class LoginServiceImpl implements LoginService {
         String dbEmail = userMapper.getEmailByEmail(email);
 
         if (dbUsername != null && dbUsername.equals(username)) {
-            return ResponseEntity.status(409).body(Result.error(409,"Username already exists"));
-        } else if (dbEmail != null && email.equals(dbEmail)) {
-            return ResponseEntity.status(409).body(Result.error(409,"Email already exists"));
+            return ResponseEntity.status(409).body(Result.error(409, "Username already exists"));
+        } else if (email.equals(dbEmail)) {
+            return ResponseEntity.status(409).body(Result.error(409, "Email already exists"));
         } else {
-            return storeCodeInRedis(user, "register");
+            return storeCodeInRedis(user, UserAction.REGISTER);
         }
     }
 
@@ -137,7 +135,13 @@ public class LoginServiceImpl implements LoginService {
             cookie.setMaxAge(0);
             response.addCookie(cookie);
 
-            return ResponseEntity.ok(Result.success("Logout successful"));
+            //设置黑名单blacklist
+            Date tokenExpirationTime = jwtUtil.getTokenExpirationTime(token);
+            long remainingTime = tokenExpirationTime.getTime() - System.currentTimeMillis();
+            String redisTokenKey = "blacklist_tokens:" + token;
+            redisTemplate.opsForValue().set(redisTokenKey, "blacklisted", remainingTime, TimeUnit.MILLISECONDS);
+
+            return ResponseEntity.status(HttpStatus.OK).body(Result.success("Logout successful"));
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.error(400, "Token not found in cookies"));
         }
@@ -145,6 +149,7 @@ public class LoginServiceImpl implements LoginService {
 
     /**
      * public method to remove all spaces from a string
+     *
      * @param string the string to remove spaces from
      * @return the string without spaces
      */
@@ -153,19 +158,19 @@ public class LoginServiceImpl implements LoginService {
     }
 
     /**
-     * public method to store the code in Redis
-     * @param user the temp user to store in Redis
+     * public method to store the code in Redis and send the code to the user's email
+     * @param user   the temp user to store in Redis
      * @param action the action to store in Redis
      * @return the response entity
      */
-    private ResponseEntity<Result> storeCodeInRedis(User user, String action) {
+    private ResponseEntity<Result> storeCodeInRedis(User user, UserAction action) {
         // verify the email by sending a verification code
         String email = removeSpacesByRegex(user.getEmail());
 
-        // 生成验证码并 先 存入Redis
+        // 生成验证码并"先"存入Redis
         String code = emailService.generateVerificationCode();
         redisTemplate.opsForValue().set(email, code, 3, TimeUnit.MINUTES);
-        redisTemplate.opsForValue().set("temp_user:" + email + ":" + action, user, 4, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set("temp_user:" + email + ":" + action.name(), user, 3, TimeUnit.MINUTES);
 
         // 异步发送验证码邮件
         CompletableFuture.runAsync(() -> {
@@ -174,7 +179,7 @@ public class LoginServiceImpl implements LoginService {
             } catch (Exception e) {
                 // 邮件发送失败时，从Redis中删除验证码
                 redisTemplate.delete(email);
-                redisTemplate.delete("temp_user:" + email + ":" + action);
+                redisTemplate.delete("temp_user:" + email + ":" + action.name());
                 // 记录发送邮件的异常
                 log.error("Failed to send verification code to email: {}", email, e);
             }
@@ -186,7 +191,7 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     @Transactional
-    public ResponseEntity<Result> verifyCode(String email, String code, String action) {
+    public ResponseEntity<Result> verifyCode(String email, String code, UserAction action) {
         // 去除所有空格
         email = removeSpacesByRegex(email);
         code = removeSpacesByRegex(code);
@@ -196,11 +201,10 @@ public class LoginServiceImpl implements LoginService {
             User tempUser = (User) redisTemplate.opsForValue().get("temp_user:" + email + ":" + action);
             if (tempUser != null) {
                 return switch (action) {
-                    case "register" -> completeRegistration(tempUser);
-                    case "updateProfile" -> completeProfileUpdate(tempUser);
+                    case REGISTER -> completeRegistration(tempUser);
+                    case UPDATE_PROFILE -> completeProfileUpdate(tempUser);
                     //告诉前端邮箱验证成功，重定向到修改密码的页面
-                    case "resetPassword" -> ResponseEntity.status(202).body(Result.success("Verification successful"));
-                    default -> ResponseEntity.status(400).body(Result.error(400, "Invalid action"));
+                    case RESET_PASSWORD -> ResponseEntity.status(202).body(Result.success("Verification successful"));
                 };
             } else {
                 return ResponseEntity.status(400).body(Result.error(400, "Temporary user data not found"));
@@ -210,7 +214,7 @@ public class LoginServiceImpl implements LoginService {
         }
     }
 
-    protected ResponseEntity<Result> completeProfileUpdate(User user) {
+    private ResponseEntity<Result> completeProfileUpdate(User user) {
         userMapper.updateUser(user);
         redisTemplate.delete(user.getEmail());
         redisTemplate.delete("temp_user:" + user.getEmail() + ":updateProfile");
@@ -232,7 +236,7 @@ public class LoginServiceImpl implements LoginService {
         return ResponseEntity.ok(Result.success("Profile updated successfully"));
     }
 
-    protected ResponseEntity<Result> completeRegistration(User user) {
+    private ResponseEntity<Result> completeRegistration(User user) {
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userMapper.insertUser(user);
         Long userId = user.getId();
@@ -271,7 +275,7 @@ public class LoginServiceImpl implements LoginService {
             user.setUsername(user.getUsername());// 重新设置用户名
 
             //验证邮箱
-            return storeCodeInRedis(user, "updateProfile");
+            return storeCodeInRedis(user, UserAction.UPDATE_PROFILE);
         } else {//如果没有修改邮箱，则直接更新用户信息
             return completeProfileUpdate(user);
         }
@@ -282,10 +286,10 @@ public class LoginServiceImpl implements LoginService {
     public ResponseEntity<Result> resetPassword(User user) {
         if (user == null || user.getEmail() == null) {
             return ResponseEntity.status(400).body(Result.error(400, "Email or other fields are empty"));
-        }else if (userMapper.getEmailByEmail(removeSpacesByRegex(user.getEmail())) == null) {
+        } else if (userMapper.getEmailByEmail(removeSpacesByRegex(user.getEmail())) == null) {
             return ResponseEntity.status(400).body(Result.error(400, "Email does not exist"));
         }
-        return storeCodeInRedis(user, "resetPassword");
+        return storeCodeInRedis(user, UserAction.RESET_PASSWORD);
     }
 
     @Override
@@ -303,6 +307,7 @@ public class LoginServiceImpl implements LoginService {
 
     /**
      * 移除所有用户缓存
+     *
      * @param userId 用户ID
      */
     private void evictAllUserCaches(Long userId) {

@@ -2,6 +2,7 @@ package com.demo.myapp.service.impl;
 
 import com.demo.myapp.dto.DeviceStatsDTO;
 import com.demo.myapp.controller.response.Result;
+import com.demo.myapp.exception.DeviceOperationException;
 import com.demo.myapp.mapper.DeviceMapper;
 import com.demo.myapp.mapper.EnergyMapper;
 import com.demo.myapp.mapper.MqttSubscriptionMapper;
@@ -9,11 +10,15 @@ import com.demo.myapp.pojo.*;
 import com.demo.myapp.service.DeviceService;
 import com.demo.myapp.service.UserActivityService;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,9 +67,11 @@ public class DeviceServiceImpl implements DeviceService {
 
     @Override
     @Transactional
-    public ResponseEntity<Result> addDevice(Device device) {
+    public ResponseEntity<Result> addDevice(@Valid Device device) {
         // 获取当前登录用户的ID
         Long userId = userService.getCurrentUserId();
+        String username = userService.getCurrentUsername(); // Retrieve once
+
         cachedDeviceService.clearDeviceStatsCache(userId); // !清除设备状态统计缓存
         cachedDeviceService.clearDevicesByPageCache(userId); // !清除设备分页缓存
         // 检查设备名称是否重复
@@ -81,20 +88,27 @@ public class DeviceServiceImpl implements DeviceService {
             //记录用户操作
             userActivityService.logUserActivity(
                     userId,
-                    userService.getCurrentUsername(),
+                    username,
                     device.getName(),
-                    "Add device by user '" + userService.getCurrentUsername() + "', default status is 'OFF', at time " + LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                    "Add device by user '" +
+                            username +
+                            "', default status is 'OFF', at time " +
+                            LocalDateTime.now().format(DATE_TIME_FORMATTER)
             );
 
             //TODO: 这里需要配合一个写死的模拟器来使用，后续可以改进
             initializeDeviceMqttSettings(device);
 
             return ResponseEntity.ok(Result.success("Device added successfully"));
-        } catch (Exception e) {
-            logger.error("Error adding device", e);
-            //TODO: 这里是不是不能吞掉异常，需要抛出异常，然后全局异常处理？不然会导致事物无法回滚？
-            //throw new DeviceOperationException("Error adding device", e);
-            return ResponseEntity.badRequest().body(Result.error(405, "Error adding device"));
+        } catch (DuplicateKeyException e) {
+            logger.error("Device name already exists in the database", e);
+            throw new DeviceOperationException("Device name already exists", e);
+        } catch (DataAccessException e) {
+            logger.error("Database error while adding device", e);
+            throw new DeviceOperationException("Database error while adding device", e);
+        } catch (MqttException e) {
+            logger.error("MQTT error while adding device", e);
+            throw new DeviceOperationException("Failed to initialize MQTT settings for the device", e);
         }
     }
 
@@ -102,10 +116,13 @@ public class DeviceServiceImpl implements DeviceService {
     @Transactional
     public ResponseEntity<Result> updateDevice(Long id, Device device) {
         Long userId = userService.getCurrentUserId();
+        String username = userService.getCurrentUsername();
         cachedDeviceService.clearDevicesByPageCache(userId); // !清除设备分页缓存
-        // 检查设备名称是否重复
-        if (deviceMapper.findDeviceByName(device.getName(), userId) != null) {
-            return ResponseEntity.badRequest().body(Result.error(405, "Device name already exists"));
+
+        Device existingDevice = deviceMapper.findDeviceByName(device.getName(), userId);
+        // 检查设备名称是否重复(排除当前设备)
+        if (existingDevice != null && !existingDevice.getId().equals(id)) {
+            return ResponseEntity.badRequest().body(Result.error(409, "Device name already exists"));
         }
         device.setUserId(userId);
         device.setId(id);
@@ -118,20 +135,23 @@ public class DeviceServiceImpl implements DeviceService {
             //记录用户操作
             userActivityService.logUserActivity(
                     userId,
-                    userService.getCurrentUsername(),
+                    username,
                     device.getName(),
                     "Update device by user '" +
-                            userService.getCurrentUsername()
+                            username
                             + "', device name is '" + device.getName()
                             + "', device type is '" + device.getType()
-                            + "' at time " + LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                            + "' at time " + LocalDateTime.now().format(DATE_TIME_FORMATTER)
             );
 
             return ResponseEntity.ok(Result.success("Device updated successfully"));
-        } catch (Exception e) {
-            logger.error("Error updating device", e);
-            //TODO: 这里是不是不能吞掉异常，需要抛出异常，然后全局异常处理？不然会导致事物无法回滚？
-            return ResponseEntity.badRequest().body(Result.error(405, "Error updating device"));
+        } catch (DuplicateKeyException e) {
+            logger.error("Device name already exists in the database", e);
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Result.error(409, "Device name already exists"));
+        } catch (DataAccessException e) {
+            logger.error("Database error while updating device", e);
+            throw new DeviceOperationException("Database error while updating device", e);
         }
     }
 
@@ -147,9 +167,12 @@ public class DeviceServiceImpl implements DeviceService {
         cachedDeviceService.clearDevicesByPageCache(userId); // !清除设备分页缓存
 
         try {
-            // 批量删除设备
-            // TODO：这里还需要注意不同的数据库对于in语句的限制，比如mysql最多1000个，我们目前不会有这么多设备，但是还是需要注意可以改进。
-            deviceMapper.deleteDevicesByIds(ids, userId);
+            // 批量删除设备(每次最多删除900个设备，防止数据库限制报错)
+            int batchSize = 900; // Safe batch size
+            for (int i = 0; i < ids.size(); i += batchSize) {
+                List<Long> batchIds = ids.subList(i, Math.min(i + batchSize, ids.size()));
+                deviceMapper.deleteDevicesByIds(batchIds, userId);
+            }
 
             // 准备 MQTT 主题列表
             List<String> topics = ids.stream()
@@ -176,43 +199,61 @@ public class DeviceServiceImpl implements DeviceService {
             userActivityService.logUserActivities(activities);
 
             return ResponseEntity.ok(Result.success("Device deleted successfully"));
+        } catch (DataAccessException e) {
+            logger.error("Database error while deleting device", e);
+            throw new DeviceOperationException("Database error while deleting device", e);
+        } catch (MqttException e) {
+            logger.error("MQTT error while deleting device", e);
+            throw new DeviceOperationException("Failed to unsubscribe MQTT topics", e);
         } catch (Exception e) {
             logger.error("Error deleting device", e);
-            // TODO: 这里是不是不能吞掉异常，需要抛出异常，然后全局异常处理？不然会导致事物无法回滚？
-            return ResponseEntity.badRequest().body(Result.error(405, "Error deleting device"));
+            throw new DeviceOperationException("Error deleting device", e);
         }
     }
 
     @Override
-//    @Transactional
+    @Transactional
     public ResponseEntity<Result> controlDevice(Long id, String command) {
         command = command.toUpperCase(); // 转换为大写
         Long userId = userService.getCurrentUserId();
+        String username = userService.getCurrentUsername();
         cachedDeviceService.clearDeviceStatsCache(userId); // !清除设备状态统计缓存
         cachedDeviceService.clearDevicesByPageCache(userId); // !清除设备分页缓存
         Device device = deviceMapper.findDeviceById(id);
-        if (device == null || !device.getUserId().equals(userId)) {
-            logger.error("User does not have permission to operate this device");
-            return ResponseEntity.badRequest().body(Result.error(405, "Device not found"));
+
+        if (device == null) {// 设备不存在
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Result.error(404, "Device not found"));
+        }
+        if (!device.getUserId().equals(userId)) {// 设备不属于当前用户
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Result.error(403, "Access denied"));
         }
 
-        device.setUserId(userId);
-        device.setStatus(command);
-        // 使用MQTT发送控制命令
-        String topic = "home/device/" + device.getId() + "/status";
-        mqttService.publish(topic, command);// 发布消息
-        deviceMapper.updateDeviceStatus(device); // 更新设备状态在数据库
-        //记录用户操作
-        userActivityService.logUserActivity(
-                userId,
-                userService.getCurrentUsername(),
-                device.getName(),
-                "Controlled device by user '" +
-                        userService.getCurrentUsername() +
-                        "', device name is '" + device.getName() +
-                        "', command is '" + command +
-                        "', at time " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        );
+        try {
+            device.setUserId(userId);
+            device.setStatus(command);
+            // 使用MQTT发送控制命令
+            String topic = "home/device/" + device.getId() + "/status";
+            mqttService.publish(topic, command);// 发布消息
+            deviceMapper.updateDeviceStatus(device); // 更新设备状态在数据库
+            //记录用户操作
+            userActivityService.logUserActivity(
+                    userId,
+                    username,
+                    device.getName(),
+                    "Controlled device by user '" +
+                            username +
+                            "', device name is '" + device.getName() +
+                            "', command is '" + command +
+                            "', at time " + LocalDateTime.now().format(DATE_TIME_FORMATTER)
+            );
+        } catch (DataAccessException e) {
+            logger.error("Database error while controlling device", e);
+            throw new DeviceOperationException("Database error while controlling device", e);
+        } catch (Exception e) {
+            logger.error("Error controlling device", e);
+            throw new DeviceOperationException("Error controlling device", e);
+        }
+
         return ResponseEntity.ok(Result.success("Device controlled successfully"));
 
     }
@@ -261,9 +302,12 @@ public class DeviceServiceImpl implements DeviceService {
         mqttSubscription.setUserId(device.getUserId());
         try {
             mqttSubscriptionMapper.insert(mqttSubscription);
+        } catch (DataAccessException e) {
+            logger.error("Error inserting MQTT subscription", e);
+            throw new DeviceOperationException("Error inserting MQTT subscription", e);
         } catch (Exception e) {
-            logger.error("Error adding mqtt subscription", e);
-            throw new RuntimeException(e);
+            logger.error("Error initializing MQTT settings", e);
+            throw new DeviceOperationException("Error initializing MQTT settings", e);
         }
     }
 

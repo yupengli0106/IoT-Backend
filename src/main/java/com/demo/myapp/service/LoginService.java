@@ -1,6 +1,7 @@
 package com.demo.myapp.service;
 
 import com.demo.myapp.controller.response.Result;
+import com.demo.myapp.enums.UserAction;
 import com.demo.myapp.pojo.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,13 +25,13 @@ public interface LoginService {
     ResponseEntity<Result> logout(HttpServletRequest request, HttpServletResponse response);
 
     /**
-     * after the Register API is called, the user will receive an email with a verification code,
-     * then the user will call this API to verify the code
-     * @param email the email address
-     * @param code the code from the user
-     * @return the result of the verification, if the code is correct, insert the user into the database, otherwise return the error message
+     * verify the verification code
+     * @param email user's email
+     * @param code verification code
+     * @param action the action that the user is performing
+     * @return if the verification code is correct, return the success message, otherwise return the error message
      */
-    ResponseEntity<Result> verifyCode(String email, String code, String action);
+    ResponseEntity<Result> verifyCode(String email, String code, UserAction action);
 
     ResponseEntity<Result> updateProfile(User user);
 
