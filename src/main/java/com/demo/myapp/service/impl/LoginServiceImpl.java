@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -215,7 +216,14 @@ public class LoginServiceImpl implements LoginService {
     }
 
     private ResponseEntity<Result> completeProfileUpdate(User user) {
-        userMapper.updateUser(user);
+        try {
+            userMapper.updateUser(user);
+        } catch (DuplicateKeyException e) {
+            return ResponseEntity.status(409).body(Result.error(409, "Username already exists, please try another one"));
+        }catch (Exception e){
+            return ResponseEntity.status(500).body(Result.error(500, "Internal server error, please try again later"));
+        }
+
         redisTemplate.delete(user.getEmail());
         redisTemplate.delete("temp_user:" + user.getEmail() + ":updateProfile");
 
