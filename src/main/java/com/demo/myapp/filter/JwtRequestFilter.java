@@ -34,6 +34,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        // !如果是登录请求，跳过检索token的部分，直接进入下一个过滤器，通过用户名和密码进行验证登录
+        if ("/login".equals(request.getRequestURI()) && "POST".equals(request.getMethod())) {
+            SecurityContextHolder.clearContext();
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // 从请求中提取出token
         String token = jwtUtil.extractTokenFromCookies(request);
 

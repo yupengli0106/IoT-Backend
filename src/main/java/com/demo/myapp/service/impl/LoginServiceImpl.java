@@ -64,6 +64,16 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public ResponseEntity<Result> login(User user, HttpServletResponse response) {
+        // !在登录时，清除所有之前的认证信息。这样可以确保每次登录都是新的认证信息。
+        // !但是没有把之前的token加入黑名单，这样就可以实现多端登录。
+        // 但是如果需要实现单端登录，可以在登录时把之前的token加入黑名单, 跟logout一样
+        Cookie cookie = new Cookie("httpOnlyToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+
         // use SpringSecurity's AuthenticationManager to authenticate the user
         // 如果认证失败，会抛出异常，由全局异常处理器处理（AuthenticationException）
         Authentication authentication = authenticationManager.authenticate(
