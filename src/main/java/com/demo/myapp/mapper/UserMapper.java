@@ -30,5 +30,5 @@ public interface UserMapper {
     void changePassword(User user);
 
     @Select("select * from users where id = #{userId}")
-    User finUserById(Long userId);
+    User findUserById(Long userId);
 }

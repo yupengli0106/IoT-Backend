@@ -40,7 +40,7 @@ public class CachedUserService {
 
     @Cacheable(value = "users", key = "#userId")
     public User getUserById(Long userId) {
-        return userMapper.finUserById(userId);
+        return userMapper.findUserById(userId);
     }
 
     @Cacheable(value = "roles", key = "#userId")
