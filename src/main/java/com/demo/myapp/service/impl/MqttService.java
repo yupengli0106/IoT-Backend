@@ -65,7 +65,7 @@ public class MqttService {
      */
     public void publish(String topic, String payload) {
         // TODO: could implement a message queue to store messages until the client reconnects?
-        if (!mqttClient.isConnected()) {
+        if (ensureConnected()) {// check if the client is connected before publishing
             logger.error("MQTT client is not connected. Cannot publish to topic: {}", topic);
             return;
         }
@@ -103,7 +103,7 @@ public class MqttService {
      * @param topic 主题
      */
     public void subscribe(String topic) {
-        if (!mqttClient.isConnected()) {
+        if (ensureConnected()) {// check if the client is connected before subscribing
             logger.error("MQTT client is not connected. Cannot subscribe to topic: {}", topic);
             return;
         }
@@ -216,5 +216,22 @@ public class MqttService {
         } catch (Exception e) {
             logger.error("Failed to send message to clients: {}", jsonObject.toString(), e);
         }
+    }
+
+    /**
+     * Ensure the MQTT client is connected before publishing or subscribing
+     * @return true if connected, false if failed to connect
+     */
+    private boolean ensureConnected() {
+        if (!mqttClient.isConnected()) {
+            try {
+                mqttClient.connect(); // Use connect() instead of reconnect() for explicit control
+                return false;
+            } catch (MqttException e) {
+                logger.error("Failed to connect MQTT client", e);
+                return true;
+            }
+        }
+        return false;
     }
 }
