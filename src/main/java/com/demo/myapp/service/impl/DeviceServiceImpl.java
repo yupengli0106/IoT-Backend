@@ -214,6 +214,22 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     @Transactional
     public ResponseEntity<Result> controlDevice(Long id, String command) {
+        // Validate command using enum
+        enum DeviceCommand {
+            ON, OFF;
+
+            public static boolean isValid(String cmd) {
+                try {
+                    valueOf(cmd.toUpperCase());
+                    return true;
+                } catch (IllegalArgumentException e) {
+                    return false;
+                }
+            }
+        }
+        if (!DeviceCommand.isValid(command)) {
+            return ResponseEntity.badRequest().body(Result.error(400, "Invalid command"));
+        }
         command = command.toUpperCase(); // 转换为大写
         Long userId = userService.getCurrentUserId();
         String username = userService.getCurrentUsername();
