@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
  * @Description:
  */
 public interface LoginService {
-    ResponseEntity<Result> login(User user, HttpServletResponse response);
+    ResponseEntity<Result> login(User user, HttpServletResponse response, HttpServletRequest request);
 
     /**
      * register a new user and send the verification code to the user's email

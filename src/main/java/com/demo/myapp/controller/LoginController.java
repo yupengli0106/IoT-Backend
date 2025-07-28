@@ -24,8 +24,8 @@ public class LoginController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<Result> login(@RequestBody User user, HttpServletResponse response) {
-        return loginService.login(user, response);
+    public ResponseEntity<Result> login(@RequestBody User user, HttpServletResponse response, HttpServletRequest request) {
+        return loginService.login(user, response, request);
     }
 
     @DeleteMapping("/logout")

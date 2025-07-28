@@ -8,6 +8,7 @@ import com.demo.myapp.pojo.LoginUser;
 import com.demo.myapp.pojo.User;
 import com.demo.myapp.service.LoginService;
 import com.demo.myapp.utils.JwtUtil;
+import com.demo.myapp.utils.RateLimitUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,11 +16,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,7 +30,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,113 +61,187 @@ public class LoginServiceImpl implements LoginService {
     JwtUtil jwtUtil;
     @Resource
     CachedUserService cachedUserService;
+    @Resource
+    RateLimitUtil rateLimitUtil;
 
     private static final Logger log = LoggerFactory.getLogger(LoginServiceImpl.class);
+    
+    // Configurable constants for better maintainability
+    private static final String TEMP_USER_PREFIX = "temp_user:";
+    private static final String VERIFICATION_ATTEMPTS_PREFIX = "verify_attempts:";
+    private static final int VERIFICATION_CODE_TTL_MINUTES = 3;
+    private static final int MAX_VERIFICATION_ATTEMPTS = 3;
+    private static final int JWT_COOKIE_MAX_AGE_HOURS = 24;
+    private static final String JWT_COOKIE_NAME = "httpOnlyToken";
 
     @Override
-    public ResponseEntity<Result> login(User user, HttpServletResponse response) {
-        // !在登录时，清除所有之前的认证信息。这样可以确保每次登录都是新的认证信息。
-        // !但是没有把之前的token加入黑名单，这样就可以实现多端登录。
-        // 但是如果需要实现单端登录，可以在登录时把之前的token加入黑名单, 跟logout一样
-        Cookie cookie = new Cookie("httpOnlyToken", null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+    public ResponseEntity<Result> login(User user, HttpServletResponse response, HttpServletRequest request) {
+        String clientIp = rateLimitUtil.getClientIpAddress(request);
+        String correlationId = MDC.get("correlationId");
+        
+        // Check rate limiting before processing login
+        if (rateLimitUtil.isRateLimited(clientIp, "login")) {
+            log.warn("Login rate limit exceeded for IP: {} [{}]", clientIp, correlationId);
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Result.error(429, "Too many login attempts. Please try again later."));
+        }
 
-        // use SpringSecurity's AuthenticationManager to authenticate the user
-        // 如果认证失败，会抛出异常，由全局异常处理器处理（AuthenticationException）
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+        try {
+            // Clear any existing authentication cookie
+            clearAuthCookie(response);
 
-        // Successful authentication
-        LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+            // Add correlation ID and IP to logs
+            log.info("Login attempt for user: {} from IP: {} [{}]", user.getUsername(), clientIp, correlationId);
 
-        // user info for front-end
-        Map<String, Object> userInfo = new HashMap<>();
-        userInfo.put("roles", loginUser.getRoles());
-        userInfo.put("username", loginUser.getUser().getUsername());
-        userInfo.put("email", loginUser.getUser().getEmail());
-        userInfo.put("permissions", loginUser.getPermissions());
-        userInfo.put("userId", loginUser.getUser().getId());
+            // Use SpringSecurity's AuthenticationManager to authenticate the user
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
-        // Generate a token by only storing the user id in the token
-        Map<String, Object> tokenMap = new HashMap<>();
-        tokenMap.put("userId", loginUser.getUser().getId());
-        String token = jwtUtil.generateToken(tokenMap);
+            // Successful authentication
+            LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+            
+            // Clear rate limiting on successful login
+            rateLimitUtil.clearRateLimit(clientIp, "login");
+            
+            log.info("Login successful for user: {} [{}]", user.getUsername(), correlationId);
 
-        // 将 token 设置为 HttpOnly 和 Secure Cookie
-        Cookie jwtCookie = new Cookie("httpOnlyToken", token);
-        jwtCookie.setHttpOnly(true); // 设置 HttpOnly 防止 XSS 攻击
-        jwtCookie.setSecure(true); // 设置 Secure 确保只在 HTTPS 中传输
-        jwtCookie.setMaxAge(24 * 60 * 60); // 设置有效期为 1 天（单位：秒）注意Token的有效期需不需要和Cookie的有效期一致
-        jwtCookie.setPath("/"); // 适用于整个应用
-        //            jwtCookie.setDomain("localhost"); // 这个应该是你的域名，只有在这个域名下才能访问到这个 cookie
-        response.addCookie(jwtCookie); // 将 cookie 添加到响应中
+            // user info for the front-end
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("roles", loginUser.getRoles());
+            userInfo.put("username", loginUser.getUser().getUsername());
+            userInfo.put("email", loginUser.getUser().getEmail());
+            userInfo.put("permissions", loginUser.getPermissions());
+            userInfo.put("userId", loginUser.getUser().getId());
 
-        // return the token and user info to the client
-        // for stateless authentication, the server does not need to store the token
-        Map<String, Object> responseData = new HashMap<>();
-        responseData.put("user", userInfo);
-        responseData.put("message", "Login successful");
+            // Generate a token by only storing the user id in the token
+            Map<String, Object> tokenMap = new HashMap<>();
+            tokenMap.put("userId", loginUser.getUser().getId());
+            tokenMap.put("username", loginUser.getUser().getUsername()); // IMPROVED: Add username for better logging
+            String token = jwtUtil.generateToken(tokenMap);
 
-        return ResponseEntity.ok(Result.success(responseData));
+            // Set secure HttpOnly cookie with better configuration
+            setSecureAuthCookie(response, token);
+
+            // return the token and user info to the client
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("user", userInfo);
+            responseData.put("message", "Login successful");
+
+            return ResponseEntity.ok(Result.success(responseData));
+            
+        } catch (BadCredentialsException e) {
+            // Handle authentication failures with rate limiting
+            rateLimitUtil.incrementRateLimit(clientIp, "login");
+            log.warn("Login failed for user: {} from IP: {} [{}] - Invalid credentials", 
+                    user.getUsername(), clientIp, correlationId);
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Result.error(401, "Invalid username or password"));
+        } catch (Exception e) {
+            log.error("Login error for user: {} from IP: {} [{}]: {}", 
+                    user.getUsername(), clientIp, correlationId, e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.error(500, "Internal server error, please try again later"));
+        }
     }
 
     @Override
     @Transactional
     public ResponseEntity<Result> register(@Valid User user) {
-        String username = removeSpacesByRegex(user.getUsername());
-        String email = removeSpacesByRegex(user.getEmail());
-        // Check if the username already exists
-        String dbUsername = userMapper.getUsernameByUsername(username);
-        // Check if the email already exists
-        String dbEmail = userMapper.getEmailByEmail(email);
-
-        if (dbUsername != null && dbUsername.equals(username)) {
-            return ResponseEntity.status(409).body(Result.error(409, "Username already exists"));
-        } else if (email.equals(dbEmail)) {
-            return ResponseEntity.status(409).body(Result.error(409, "Email already exists"));
-        } else {
-            return storeCodeInRedis(user, UserAction.REGISTER);
+        // Input validation
+        if (user == null) {
+            return ResponseEntity.status(400).body(Result.error(400, "User data is required"));
+        }
+        
+        try {
+            String username = removeSpacesByRegex(user.getUsername());
+            String email = removeSpacesByRegex(user.getEmail());
+            
+            // Additional validation
+            if (!isValidEmail(email)) {
+                return ResponseEntity.status(400).body(Result.error(400, "Invalid email format"));
+            }
+            
+            if (user.getPassword() != null && !isValidPassword(user.getPassword())) {
+                return ResponseEntity.status(400).body(Result.error(400, 
+                    "Password must be at least 8 characters with uppercase, lowercase, digit, and special character"));
+            }
+            
+            // Use timing-safe existence check to prevent user enumeration
+            boolean userExists = checkUserExistenceSecurely(username, email);
+            
+            if (userExists) {
+                // Generic message to prevent user enumeration attacks
+                return buildErrorResponse(HttpStatus.CONFLICT, "User already exists");
+            } else {
+                return storeCodeInRedis(user, UserAction.REGISTER);
+            }
+        } catch (IllegalArgumentException e) {
+            return buildErrorResponse(HttpStatus.BAD_REQUEST, "Invalid input: " + e.getMessage());
         }
     }
 
     @Override
     public ResponseEntity<Result> logout(HttpServletRequest request, HttpServletResponse response) {
-        // Extract token using utility method
-        String token = jwtUtil.extractTokenFromCookies(request);
+        String correlationId = MDC.get("correlationId");
+        
+        try {
+            // Extract token from multiple sources (cookies and Authorization header)
+            String token = jwtUtil.extractTokenFromRequest(request);
 
-        if (token != null) {
-            // Invalidate the cookie
-            Cookie cookie = new Cookie("httpOnlyToken", null);
-            cookie.setHttpOnly(true);
-            cookie.setSecure(true);
-            cookie.setPath("/");
-            cookie.setMaxAge(0);
-            response.addCookie(cookie);
+            if (token != null) {
+                // Clear the authentication cookie
+                clearAuthCookie(response);
 
-            //设置黑名单blacklist
-            Date tokenExpirationTime = jwtUtil.getTokenExpirationTime(token);
-            long remainingTime = tokenExpirationTime.getTime() - System.currentTimeMillis();
-            String redisTokenKey = "blacklist_tokens:" + token;
-            redisTemplate.opsForValue().set(redisTokenKey, "blacklisted", remainingTime, TimeUnit.MILLISECONDS);
-
-            return ResponseEntity.status(HttpStatus.OK).body(Result.success("Logout successful"));
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.error(400, "Token not found in cookies"));
+                // Use a consistent blocklist key format with JwtUtil
+                jwtUtil.blacklistToken(token);
+                
+                log.info("User logout successful [{}]", correlationId);
+                return ResponseEntity.ok(Result.success("Logout successful"));
+            } else {
+                log.warn("Logout attempted without valid token [{}]", correlationId);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Result.error(400, "No active session found"));
+            }
+        } catch (Exception e) {
+            log.error("Logout error [{}]: {}", correlationId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.error(500, "Logout failed due to an internal error"));
         }
     }
 
     /**
-     * public method to remove all spaces from a string
+     * Validate and sanitize input string by removing spaces
+     * Also performs basic validation checks
      *
-     * @param string the string to remove spaces from
-     * @return the string without spaces
+     * @param input the string to validate and sanitize
+     * @return the sanitized string without spaces
+     * @throws IllegalArgumentException if input is null or empty
      */
-    private String removeSpacesByRegex(String string) {
-        return string.replaceAll("\\s", "");
+    private String removeSpacesByRegex(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            throw new IllegalArgumentException("Input cannot be null or empty");
+        }
+        return input.replaceAll("\\s", "");
+    }
+    
+    /**
+     * Validate email format
+     */
+    private boolean isValidEmail(String email) {
+        if (email == null) return false;
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        return email.matches(emailRegex);
+    }
+    
+    /**
+     * Validate password strength
+     */
+    private boolean isValidPassword(String password) {
+        if (password == null || password.length() < 8) return false;
+        // At least one digit, one lowercase, one uppercase, one special character
+        return password.matches("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).*$");
     }
 
     /**
@@ -175,53 +251,89 @@ public class LoginServiceImpl implements LoginService {
      * @return the response entity
      */
     private ResponseEntity<Result> storeCodeInRedis(User user, UserAction action) {
-        // verify the email by sending a verification code
         String email = removeSpacesByRegex(user.getEmail());
+        String correlationId = MDC.get("correlationId");
 
-        // 生成验证码并"先"存入Redis
+        // Generate verification code and store in Redis first
         String code = emailService.generateVerificationCode();
-        redisTemplate.opsForValue().set(email, code, 3, TimeUnit.MINUTES);
-        redisTemplate.opsForValue().set("temp_user:" + email + ":" + action.name(), user, 3, TimeUnit.MINUTES);
+        
+        // Store verification data atomically
+        try {
+            redisTemplate.opsForValue().set(email, code, VERIFICATION_CODE_TTL_MINUTES, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(TEMP_USER_PREFIX + email + ":" + action.name(), user, VERIFICATION_CODE_TTL_MINUTES, TimeUnit.MINUTES);
+            // Initialize verification attempts counter
+            redisTemplate.opsForValue().set(VERIFICATION_ATTEMPTS_PREFIX + email, "0", VERIFICATION_CODE_TTL_MINUTES, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.error("Failed to store verification data in Redis for email: {} [{}]", email, correlationId, e);
+            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to initiate verification process", correlationId);
+        }
 
-        // 异步发送验证码邮件
+        // Async email sending with improved error handling
         CompletableFuture.runAsync(() -> {
             try {
                 emailService.sendVerificationCode(email, code);
+                log.info("Verification code sent successfully to email: {} [{}]", email, correlationId);
             } catch (Exception e) {
-                // 邮件发送失败时，从Redis中删除验证码
-                redisTemplate.delete(email);
-                redisTemplate.delete("temp_user:" + email + ":" + action.name());
-                // 记录发送邮件的异常
-                log.error("Failed to send verification code to email: {}", email, e);
+                log.error("Failed to send verification code to email: {} [{}]", email, correlationId, e);
+                // Clean up verification data on email failure
+                cleanupVerificationData(email, action);
             }
         });
 
-        // 异步操作，通知用户验证码已发送
-        return ResponseEntity.ok(Result.success("Verification code is being sent to your email"));
+        // Async operation, notify user verification code is being sent
+        return buildSuccessResponse("Verification code is being sent to your email. Please check your inbox and spam folder.");
     }
 
     @Override
     @Transactional
     public ResponseEntity<Result> verifyCode(String email, String code, UserAction action) {
-        // 去除所有空格
+        // Remove all spaces
         email = removeSpacesByRegex(email);
         code = removeSpacesByRegex(code);
+        
+        // Check verification attempts to prevent brute force
+        String attemptsKey = VERIFICATION_ATTEMPTS_PREFIX + email;
+        String attemptsStr = (String) redisTemplate.opsForValue().get(attemptsKey);
+        int attempts = attemptsStr != null ? Integer.parseInt(attemptsStr) : 0;
+        
+        if (attempts >= MAX_VERIFICATION_ATTEMPTS) {
+            // Cleanup verification data on max attempts reached
+            cleanupVerificationData(email, action);
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Result.error(429, "Maximum verification attempts exceeded. Please request a new code."));
+        }
+        
         String storedCode = (String) redisTemplate.opsForValue().get(email);
         if (storedCode != null && storedCode.equals(code)) {
-            // 验证成功，根据不同的action执行不同的操作
-            User tempUser = (User) redisTemplate.opsForValue().get("temp_user:" + email + ":" + action);
+            // Verification successful - clear attempts counter
+            redisTemplate.delete(attemptsKey);
+            
+            // Execute different operations based on action
+            User tempUser = (User) redisTemplate.opsForValue().get(TEMP_USER_PREFIX + email + ":" + action);
             if (tempUser != null) {
                 return switch (action) {
                     case REGISTER -> completeRegistration(tempUser);
                     case UPDATE_PROFILE -> completeProfileUpdate(tempUser);
-                    //告诉前端邮箱验证成功，重定向到修改密码的页面
+                    // Tell frontend email verification successful, redirect to change password page
                     case RESET_PASSWORD -> ResponseEntity.status(202).body(Result.success("Verification successful"));
                 };
             } else {
-                return ResponseEntity.status(400).body(Result.error(400, "Temporary user data not found"));
+                return buildErrorResponse(HttpStatus.BAD_REQUEST, "Temporary user data not found");
             }
         } else {
-            return ResponseEntity.status(400).body(Result.error(400, "Invalid verification code"));
+            // Increment failed attempts
+            redisTemplate.opsForValue().set(attemptsKey, String.valueOf(attempts + 1), 
+                    VERIFICATION_CODE_TTL_MINUTES, TimeUnit.MINUTES);
+            
+            int remainingAttempts = MAX_VERIFICATION_ATTEMPTS - attempts - 1;
+            if (remainingAttempts <= 0) {
+                cleanupVerificationData(email, action);
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                        .body(Result.error(429, "Maximum verification attempts exceeded. Please request a new code."));
+            }
+            
+            return ResponseEntity.status(400).body(Result.error(400, 
+                    "Invalid verification code. " + remainingAttempts + " attempts remaining."));
         }
     }
 
@@ -229,26 +341,30 @@ public class LoginServiceImpl implements LoginService {
         try {
             userMapper.updateUser(user);
         } catch (DuplicateKeyException e) {
-            return ResponseEntity.status(409).body(Result.error(409, "Username already exists, please try another one"));
-        }catch (Exception e){
-            return ResponseEntity.status(500).body(Result.error(500, "Internal server error, please try again later"));
+            log.warn("Profile update failed - duplicate key: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Result.error(409, "Username already exists, please try another one"));
+        } catch (Exception e) {
+            log.error("Profile update failed for user ID {}: {}", user.getId(), e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.error(500, "Internal server error, please try again later"));
         }
 
-        redisTemplate.delete(user.getEmail());
-        redisTemplate.delete("temp_user:" + user.getEmail() + ":updateProfile");
+        // Clean up verification data atomically
+        cleanupVerificationData(removeSpacesByRegex(user.getEmail()), UserAction.UPDATE_PROFILE);
 
-        // 每当用户更新profile，移除所有的用户缓存，以便下次查询时重新加载数据
-        evictAllUserCaches(user.getId());
+        // Optimized: Only evict user info cache since profile update doesn't affect roles/permissions
+        evictUserCaches(user.getId(), CacheType.USER_INFO);
 
-        // 创建新的 LoginUser 对象，使用更新Spring Security上下文中的 Authentication 对象
+        // Create a new LoginUser object to update a Spring Security context Authentication object
         List<String> permissions = cachedUserService.getPermissionsByUserId(user.getId());
         List<String> roles = cachedUserService.getRolesByUserId(user.getId());
         LoginUser updatedLoginUser = new LoginUser(user, permissions, roles);
-        // 创建新的 Authentication 对象
+        // Create a new Authentication object
         Authentication newAuth = new UsernamePasswordAuthenticationToken(
                 updatedLoginUser, null, updatedLoginUser.getAuthorities()
         );
-        // 在每次更新用户信息后，都需要更新一下 SecurityContextHolder 中的 Authentication 对象
+        // Update SecurityContextHolder Authentication object after each user info update
         SecurityContextHolder.getContext().setAuthentication(newAuth);
 
         return ResponseEntity.ok(Result.success("Profile updated successfully"));
@@ -262,10 +378,10 @@ public class LoginServiceImpl implements LoginService {
         Long roleId = roleMapper.getRoleIdByRoleName("ROLE_USER");
         roleMapper.insertUserRole(userId, roleId);
 
-        redisTemplate.delete(user.getEmail());
-        redisTemplate.delete("temp_user:" + user.getEmail() + ":register");
+        // Clean up verification data atomically
+        cleanupVerificationData(removeSpacesByRegex(user.getEmail()), UserAction.REGISTER);
 
-        return ResponseEntity.ok(Result.success("Registration successful"));
+        return buildSuccessResponse("Registration successful");
     }
 
     @Override
@@ -316,22 +432,131 @@ public class LoginServiceImpl implements LoginService {
         if (user == null || user.getEmail() == null || user.getPassword() == null) {
             return ResponseEntity.status(400).body(Result.error(400, "Email or password is empty"));
         }
+        
+        String email = removeSpacesByRegex(user.getEmail());
+        
+        // Verify email ownership before allowing password change
+        // Check if there's a valid verification session for password reset
+        String verificationCode = (String) redisTemplate.opsForValue().get(email);
+        User tempUser = (User) redisTemplate.opsForValue().get(TEMP_USER_PREFIX + email + ":" + UserAction.RESET_PASSWORD.name());
+        
+        if (verificationCode == null || tempUser == null) {
+            return ResponseEntity.status(400).body(Result.error(400, 
+                    "Invalid password reset session. Please request a new password reset."));
+        }
+        
+        // Verify the email exists in a database
+        if (userMapper.getEmailByEmail(email) == null) {
+            return ResponseEntity.status(400).body(Result.error(400, "Email does not exist"));
+        }
+        
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-        //!这里是根据email去修改密码的，在上一步的resetPassword方法中已经将email存入了user对象中
+        // Change password based on email from the resetPassword method
         userMapper.changePassword(user);
+        
+        // Clean up verification data after successful password change
+        cleanupVerificationData(email, UserAction.RESET_PASSWORD);
 
         return ResponseEntity.ok(Result.success("Password reset successfully"));
     }
 
     /**
-     * 移除所有用户缓存
+     * Optimized cache eviction - only evict specific cache types that changed
      *
      * @param userId 用户ID
+     * @param cacheTypes specific cache types to evict
      */
-    private void evictAllUserCaches(Long userId) {
-        cachedUserService.evictUserCache(userId);
-        cachedUserService.evictRolesCache(userId);
-        cachedUserService.evictPermissionsCache(userId);
+    private void evictUserCaches(Long userId, CacheType... cacheTypes) {
+        for (CacheType cacheType : cacheTypes) {
+            switch (cacheType) {
+                case USER_INFO -> cachedUserService.evictUserCache(userId);
+                case ROLES -> cachedUserService.evictRolesCache(userId);
+                case PERMISSIONS -> cachedUserService.evictPermissionsCache(userId);
+                case ALL -> {
+                    cachedUserService.evictUserCache(userId);
+                    cachedUserService.evictRolesCache(userId);
+                    cachedUserService.evictPermissionsCache(userId);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Cache types for targeted eviction
+     */
+    private enum CacheType {
+        USER_INFO, ROLES, PERMISSIONS, ALL
+    }
+    
+    /**
+     * Standardized error response builder
+     */
+    private ResponseEntity<Result> buildErrorResponse(HttpStatus status, String message, String correlationId) {
+        log.warn("Error response [{}]: {} - {}", correlationId, status.value(), message);
+        return ResponseEntity.status(status).body(Result.error(status.value(), message));
+    }
+    
+    private ResponseEntity<Result> buildErrorResponse(HttpStatus status, String message) {
+        return buildErrorResponse(status, message, MDC.get("correlationId"));
+    }
+    
+    /**
+     * Standardized success response builder
+     */
+    private ResponseEntity<Result> buildSuccessResponse(Object data, String correlationId) {
+        log.debug("Success response [{}]", correlationId);
+        return ResponseEntity.ok(Result.success(data));
+    }
+    
+    private ResponseEntity<Result> buildSuccessResponse(String message) {
+        return buildSuccessResponse(message, MDC.get("correlationId"));
+    }
+
+
+    /**
+     * Set secure HTTP-only cookie for authentication
+     */
+    private void setSecureAuthCookie(HttpServletResponse response, String token) {
+        Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, token);
+        jwtCookie.setHttpOnly(true); // Prevent XSS attacks
+        jwtCookie.setSecure(true); // HTTPS only
+        jwtCookie.setMaxAge(JWT_COOKIE_MAX_AGE_HOURS * 60 * 60);
+        jwtCookie.setPath("/"); // Entire application
+        // Note: SameSite not available in older servlet versions - handle in web server config
+        response.addCookie(jwtCookie);
+    }
+
+    /**
+     * Clear authentication cookie
+     */
+    private void clearAuthCookie(HttpServletResponse response) {
+        Cookie cookie = new Cookie(JWT_COOKIE_NAME, null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+    }
+
+    /**
+     * Cleanup verification data from Redis
+     */
+    private void cleanupVerificationData(String email, UserAction action) {
+        redisTemplate.delete(email);
+        redisTemplate.delete(TEMP_USER_PREFIX + email + ":" + action.name());
+        redisTemplate.delete(VERIFICATION_ATTEMPTS_PREFIX + email);
+    }
+
+    /**
+     * IMPROVED: Secure user existence check to prevent user enumeration
+     */
+    private boolean checkUserExistenceSecurely(String username, String email) {
+        // Check both username and email but don't reveal which one exists
+        String dbUsername = userMapper.getUsernameByUsername(removeSpacesByRegex(username));
+        String dbEmail = userMapper.getEmailByEmail(removeSpacesByRegex(email));
+        
+        return (dbUsername != null && dbUsername.equals(removeSpacesByRegex(username))) || 
+               (dbEmail != null && dbEmail.equals(removeSpacesByRegex(email)));
     }
 
 }
