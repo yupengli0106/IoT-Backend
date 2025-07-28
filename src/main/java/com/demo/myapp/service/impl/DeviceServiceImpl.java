@@ -56,13 +56,29 @@ public class DeviceServiceImpl implements DeviceService {
 
     @Override
     public List<Device> getAllDevices() {
-        // TODO: 缓存设备到redis中，提高查询速度。在删除或更新设备时，清除相应的缓存。
-        return deviceMapper.findAllDevices();
+        // SECURITY FIX: Add user isolation to device retrieval
+        Long userId = userService.getCurrentUserId();
+        logger.debug("Retrieving all devices for user: {}", userId);
+        
+        // Use a paginated query with a large page size instead of getting all devices
+        List<Device> devices = deviceMapper.findDevicesByPage(userId, 1000, 0);
+        logger.debug("Retrieved {} devices for user: {}", devices.size(), userId);
+        
+        return devices;
     }
 
     @Override
     public Device getDeviceById(Long id) {
-        return deviceMapper.findDeviceById(id);
+        // SECURITY FIX: Add user isolation to prevent cross-user device access
+        Long userId = userService.getCurrentUserId();
+        logger.debug("Retrieving device {} for user: {}", id, userId);
+        
+        Device device = deviceMapper.findDeviceByIdAndUserId(id, userId);
+        if (device == null) {
+            logger.warn("Device {} not found or not owned by user {}", id, userId);
+        }
+        
+        return device;
     }
 
     @Override
@@ -235,13 +251,13 @@ public class DeviceServiceImpl implements DeviceService {
         String username = userService.getCurrentUsername();
         cachedDeviceService.clearDeviceStatsCache(userId); // !清除设备状态统计缓存
         cachedDeviceService.clearDevicesByPageCache(userId); // !清除设备分页缓存
-        Device device = deviceMapper.findDeviceById(id);
+        // SECURITY FIX: Use secure method that includes user isolation
+        Device device = deviceMapper.findDeviceByIdAndUserId(id, userId);
 
-        if (device == null) {// 设备不存在
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Result.error(404, "Device not found"));
-        }
-        if (!device.getUserId().equals(userId)) {// 设备不属于当前用户
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Result.error(403, "Access denied"));
+        if (device == null) {
+            // IMPROVED: More informative logging and response
+            logger.warn("Device control attempted - device {} not found or not owned by user {}", id, userId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Result.error(404, "Device not found or access denied"));
         }
 
         try {
@@ -279,6 +295,9 @@ public class DeviceServiceImpl implements DeviceService {
             key = "'devicesByPage_' + #currentUserId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize",
             condition = "#pageable.pageNumber <= 3")
     public RestPage<Device> getDevicesByPage(Pageable pageable, long currentUserId) { // !仅缓存前三页热点数据
+        // IMPROVED: Track cache key for proper invalidation
+        String cacheKey = "devicesByPage_" + currentUserId + "_" + pageable.getPageNumber() + "_" + pageable.getPageSize();
+        
         // 分页参数
         int pageSize = pageable.getPageSize();
         int offset = pageable.getPageNumber() * pageSize;
@@ -291,6 +310,11 @@ public class DeviceServiceImpl implements DeviceService {
 
         // 查询分页设备列表
         List<Device> devices = deviceMapper.findDevicesByPage(currentUserId,pageSize, offset);
+
+        // IMPROVED: Register cache key for tracking when caching condition is met
+        if (pageable.getPageNumber() <= 3) {
+            cachedDeviceService.trackDevicesByPageCacheKey(currentUserId, cacheKey);
+        }
 
         // ！使用RestPage封装分页数据,继承了PageImpl.这样做是为了在cache的时候可以正确的被序列化
         return new RestPage<>(devices, pageable.getPageNumber(), pageable.getPageSize(), totalDevices);

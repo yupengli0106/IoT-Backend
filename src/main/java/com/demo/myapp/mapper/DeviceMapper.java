@@ -13,9 +13,12 @@ import java.util.List;
  */
 @Mapper
 public interface DeviceMapper {
-    @Select("SELECT * FROM devices")
-    List<Device> findAllDevices();
-
+    // Added user isolation to device retrieval
+    @Select("SELECT * FROM devices WHERE id = #{id} AND user_id = #{userId}")
+    Device findDeviceByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
+    
+    // DEPRECATED: This method lacks user isolation - use findDeviceByIdAndUserId instead
+    @Deprecated
     @Select("SELECT * FROM devices WHERE id = #{id}")
     Device findDeviceById(Long id);
 

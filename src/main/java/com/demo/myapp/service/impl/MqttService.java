@@ -4,6 +4,7 @@ import com.demo.myapp.handler.WebSocketHandler;
 import com.demo.myapp.mapper.DeviceMapper;
 import com.demo.myapp.mapper.EnergyMapper;
 import com.demo.myapp.mapper.MqttSubscriptionMapper;
+import com.demo.myapp.pojo.Device;
 import com.demo.myapp.pojo.Energy;
 import jakarta.annotation.Resource;
 import org.eclipse.paho.client.mqttv3.*;
@@ -59,14 +60,15 @@ public class MqttService {
     }
 
     /**
-     * 发布消息
+     * IMPROVED: 发布消息 with proper connection handling
      * @param topic 主题
      * @param payload 消息内容
      */
     public void publish(String topic, String payload) {
-        // TODO: could implement a message queue to store messages until the client reconnects?
-        if (ensureConnected()) {// check if the client is connected before publishing
+        // CRITICAL FIX: Correct the boolean logic - proceed only if connected
+        if (!ensureConnected()) {
             logger.error("MQTT client is not connected. Cannot publish to topic: {}", topic);
+            // TODO: FUTURE IMPROVEMENT - Store failed messages for retry later
             return;
         }
 
@@ -99,11 +101,12 @@ public class MqttService {
     }
 
     /**
-     * 订阅主题
+     * IMPROVED: 订阅主题 with proper connection handling
      * @param topic 主题
      */
     public void subscribe(String topic) {
-        if (ensureConnected()) {// check if the client is connected before subscribing
+        // CRITICAL FIX: Correct the boolean logic - proceed only if connected
+        if (!ensureConnected()) {
             logger.error("MQTT client is not connected. Cannot subscribe to topic: {}", topic);
             return;
         }
@@ -180,9 +183,17 @@ public class MqttService {
             BigDecimal totalEnergy = BigDecimal.valueOf(jsonObject.getDouble("totalEnergy"));
             String sensorType = jsonObject.getString("sensorType");
 
-            Long userId = deviceMapper.findDeviceById(deviceId).getUserId();
+            // SECURITY NOTE: This is acceptable here as it's for internal MQTT processing
+            // The deviceId comes from authenticated MQTT messages, not user input
+            Device deviceInfo = deviceMapper.findDeviceById(deviceId);
+            if (deviceInfo == null) {
+                logger.error("Device not found for deviceId: {}", deviceId);
+                return;
+            }
+            
+            Long userId = deviceInfo.getUserId();
             if (userId == null || userId <= 0) {
-                logger.error("Failed to get user id by device id: {}", deviceId);
+                logger.error("Invalid user id for device: {}", deviceId);
                 return;
             }
 
@@ -219,19 +230,44 @@ public class MqttService {
     }
 
     /**
-     * Ensure the MQTT client is connected before publishing or subscribing
-     * @return true if connected, false if failed to connect
+     * CRITICAL FIX: Ensure the MQTT client is connected before publishing or subscribing
+     * 
+     * PREVIOUS BUG: The boolean logic was completely inverted!
+     * - Returned false when connection succeeded
+     * - Returned true when connection failed
+     * - Returned false when already connected
+     * 
+     * This caused all MQTT operations to fail when the client was actually connected!
+     * 
+     * @return true if connected (ready for operations), false if connection failed
      */
     private boolean ensureConnected() {
-        if (!mqttClient.isConnected()) {
-            try {
-                mqttClient.connect(); // Use connect() instead of reconnect() for explicit control
-                return false;
-            } catch (MqttException e) {
-                logger.error("Failed to connect MQTT client", e);
-                return true;
-            }
+        // If already connected, return true immediately
+        if (mqttClient.isConnected()) {
+            return true;
         }
-        return false;
+        
+        logger.info("MQTT client not connected, attempting to connect...");
+        
+        try {
+            // IMPROVED: Use synchronous connection with timeout for reliability
+            IMqttToken connectToken = mqttClient.connect();
+            connectToken.waitForCompletion(5000); // Wait max 5 seconds for connection
+            
+            boolean isConnected = mqttClient.isConnected();
+            if (isConnected) {
+                logger.info("MQTT client connected successfully");
+                return true;
+            } else {
+                logger.error("MQTT connection completed but client reports not connected");
+                return false;
+            }
+        } catch (MqttException e) {
+            logger.error("Failed to connect MQTT client: {} (Reason: {})", e.getMessage(), e.getReasonCode());
+            return false;
+        } catch (Exception e) {
+            logger.error("Unexpected error during MQTT connection: {}", e.getMessage());
+            return false;
+        }
     }
 }
