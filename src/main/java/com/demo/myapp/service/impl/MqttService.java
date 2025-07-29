@@ -178,14 +178,16 @@ public class MqttService {
      */
     private void handleEnergyData(JSONObject jsonObject) {
         try {
+            // TODO: need fix error find user id correctly.
+            long uid = jsonObject.getLong("userId");
             long deviceId = jsonObject.getLong("deviceId");
             Date recordDate = Date.valueOf(jsonObject.getString("date"));
             BigDecimal totalEnergy = BigDecimal.valueOf(jsonObject.getDouble("totalEnergy"));
             String sensorType = jsonObject.getString("sensorType");
 
             // SECURITY NOTE: This is acceptable here as it's for internal MQTT processing
-            // The deviceId comes from authenticated MQTT messages, not user input
-            Device deviceInfo = deviceMapper.findDeviceById(deviceId);
+            // TODO: The deviceId comes from authenticated MQTT messages, not user input
+            Device deviceInfo = deviceMapper.findDeviceByIdAndUserId(deviceId, uid);
             if (deviceInfo == null) {
                 logger.error("Device not found for deviceId: {}", deviceId);
                 return;

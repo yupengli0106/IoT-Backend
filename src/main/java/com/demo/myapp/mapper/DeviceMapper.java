@@ -16,11 +16,6 @@ public interface DeviceMapper {
     // Added user isolation to device retrieval
     @Select("SELECT * FROM devices WHERE id = #{id} AND user_id = #{userId}")
     Device findDeviceByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
-    
-    // DEPRECATED: This method lacks user isolation - use findDeviceByIdAndUserId instead
-    @Deprecated
-    @Select("SELECT * FROM devices WHERE id = #{id}")
-    Device findDeviceById(Long id);
 
     @Insert("INSERT INTO devices (name, type, status, user_id) VALUES (#{name}, #{type}, #{status}, #{userId})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
