@@ -41,6 +41,10 @@ spring:
             required: true
     port: 587
 
+    #dev env
+  profiles:
+    active: dev
+
 # Server configuration for deployment
 server:
   port: 8080

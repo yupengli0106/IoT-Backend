@@ -115,9 +115,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         
         // WebSocket endpoints
         if (uri.startsWith("/ws/")) return true;
-        
-        // Health check endpoints (for monitoring)
-        if (uri.startsWith("/actuator/health")) return true;
+
+        // OpenAPI Docs
+        if (uri.startsWith("/swagger-ui")) return true;
+        if (uri.startsWith("/v3")) return true;
         
         return false;
     }

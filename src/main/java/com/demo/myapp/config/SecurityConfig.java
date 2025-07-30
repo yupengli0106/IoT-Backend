@@ -40,6 +40,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login","/register","/verify-code","/forgot-password","/change-password").permitAll()// permit request without authentication
                         .requestMatchers("/ws/**").permitAll()// permit websocket request without authentication
+                        .requestMatchers("/swagger-ui/**","/v3/**").permitAll() // OpenAPI documents
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
@@ -71,23 +72,4 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    /**
-     * Cors configuration source
-     * @return CorsConfigurationSource instance
-     * @Description: CorsConfigurationSource is the interface used to configure cors related beans.
-     */
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration corsConfiguration = new CorsConfiguration();
-//        //TODO: 这里目前是允许所有的请求，实际开发中需要修改为为线上环境的域名
-//        corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-//        corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
-//        corsConfiguration.setAllowedHeaders(Arrays.asList("*"));
-//        corsConfiguration.setAllowCredentials(true);
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", corsConfiguration);
-//
-//        return source;
-//    }
 }
