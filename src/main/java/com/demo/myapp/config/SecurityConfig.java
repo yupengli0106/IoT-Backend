@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login","/register","/verify-code","/forgot-password","/change-password").permitAll()// permit request without authentication
                         .requestMatchers("/ws/**").permitAll()// permit websocket request without authentication
-                        .requestMatchers("/swagger-ui/**","/v3/**").permitAll() // OpenAPI documents
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-resources/**", "/webjars/**").permitAll() // OpenAPI access Swagger UI at: localhost:8080/swagger-ui/index.html
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
